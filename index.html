@@ -7,187 +7,266 @@
     <style>
         :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; }
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .app-container { background: white; width: 95%; max-width: 500px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 20px; }
-        .setup-section { background: #f8f9fa; padding: 15px; border-radius: 15px; margin-bottom: 15px; text-align: center; }
-        .stats-bar { display: flex; justify-content: space-around; font-weight: bold; margin-bottom: 15px; color: var(--dark); }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--dark); }
+        .app-container { background: white; width: 95%; max-width: 500px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 400px; display: flex; flex-direction: column; }
+        
+        h1 { text-align: center; font-size: 1.5rem; margin-top: 0; }
+        .step { display: none; flex-direction: column; gap: 15px; animation: fadeIn 0.3s; }
+        .step.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Boutons de sélection */
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-choice { 
+            padding: 15px; border: 2px solid #ddd; border-radius: 12px; background: white; 
+            font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem;
+        }
+        .btn-choice:active, .btn-choice.selected { 
+            background: var(--primary); color: white; border-color: var(--primary); 
+            transform: translateY(2px); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); 
+        }
+        .btn-full { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--dark); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+        /* Écran de Jeu */
         .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; }
         #verb-name { font-size: 1.6rem; font-weight: bold; color: var(--primary); text-transform: uppercase; }
         #pronoun { font-size: 1.4rem; font-weight: bold; margin: 10px 0; }
-        input[type="text"] { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.2rem; text-align: center; outline: none; }
-        .custom-tenses { display: none; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; background: #fff; padding: 15px; border-radius: 10px; border: 1px solid #eee; text-align: left; }
-        .custom-tenses label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.2rem; text-align: center; outline: none; }
+        
         .keyboard { display: flex; justify-content: center; gap: 5px; margin: 10px 0; flex-wrap: wrap; }
         .key { background: white; border: 1px solid #ddd; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 0 #ccc; }
-        .btn-check { width: 100%; padding: 15px; border: none; border-radius: 10px; background: var(--secondary); color: white; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
-        .feedback { margin-top: 15px; text-align: center; font-weight: bold; min-height: 40px; }
-        select { width: 100%; padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #ccc; background: white; }
+
+        /* Résultats */
+        .results-card { text-align: center; }
+        .score-big { font-size: 3rem; font-weight: bold; color: var(--secondary); margin: 10px 0; }
+        .review-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+        .review-table td { padding: 8px; border: 1px solid #ddd; }
+        .review-table tr:nth-child(even) { background: #f9f9f9; }
+        .error-highlight { color: var(--error); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="setup-section">
-        <label><b>Niveau DELF :</b></label>
-        <select id="level-select" onchange="window.toggleCustomTenses()">
-            <option value="A1">A1 (Débutant)</option>
-            <option value="A2">A2 (Élémentaire)</option>
-            <option value="B1">B1 (Intermédiaire)</option>
-            <option value="B2">B2 (Avancé)</option>
-            <option value="CUSTOM">Personnalisé...</option>
-        </select>
+    <h1>Conju-Coach ✍️</h1>
 
-        <div id="custom-box" class="custom-tenses">
-            <label><input type="checkbox" class="tense-opt" value="Présent"> Présent</label>
-            <label><input type="checkbox" class="tense-opt" value="Imparfait"> Imparfait</label>
-            <label><input type="checkbox" class="tense-opt" value="Passé composé"> Passé composé</label>
-            <label><input type="checkbox" class="tense-opt" value="Futur simple"> Futur simple</label>
-            <label><input type="checkbox" class="tense-opt" value="Conditionnel présent"> Conditionnel</label>
-            <label><input type="checkbox" class="tense-opt" value="Subjonctif présent"> Subjonctif</label>
-            <label><input type="checkbox" class="tense-opt" value="Plus-que-parfait"> Plus-que-parfait</label>
-            <label><input type="checkbox" class="tense-opt" value="Impératif présent"> Impératif</label>
+    <!-- ÉTAPE 1 : Choix du Niveau -->
+    <div id="step-level" class="step active">
+        <p style="text-align:center">Choisissez votre niveau DELF :</p>
+        <div class="btn-grid">
+            <button class="btn-choice" onclick="selectLevel('A1')">A1</button>
+            <button class="btn-choice" onclick="selectLevel('A2')">A2</button>
+            <button class="btn-choice" onclick="selectLevel('B1')">B1</button>
+            <button class="btn-choice" onclick="selectLevel('B2')">B2</button>
         </div>
-        <button onclick="window.initJeu()" style="margin-top:15px; width:100%; padding:10px; cursor:pointer; border-radius:8px; border:1px solid #ccc; background:#eee; font-weight:bold;">Appliquer / Nouveau Verbe</button>
+        <button class="btn-choice" style="width:100%" onclick="goToStep('step-custom')">Personnalisé ⚙️</button>
     </div>
 
-    <div class="stats-bar">
-        <span>Score: <span id="score">0</span></span>
-        <span>Total: <span id="total">0</span></span>
+    <!-- ÉTAPE 2 : Personnalisation Temps -->
+    <div id="step-custom" class="step">
+        <p style="text-align:center">Sélectionnez les temps :</p>
+        <div class="btn-grid" id="tense-buttons">
+            <!-- Généré par JS -->
+        </div>
+        <button class="btn-full" onclick="confirmCustomTenses()">Suivant</button>
     </div>
 
-    <div class="verb-card">
-        <div id="verb-name">Chargement...</div>
-        <div id="tense-name" style="font-style:italic; color:#666; font-size: 0.9rem;">-</div>
-        <div id="pronoun">---</div>
-        <input type="text" id="answer-input" placeholder="Réponse..." autocomplete="off" spellcheck="false">
-        
-        <div class="keyboard">
-            <button class="key" onclick="window.insertChar('é')">é</button>
-            <button class="key" onclick="window.insertChar('è')">è</button>
-            <button class="key" onclick="window.insertChar('à')">à</button>
-            <button class="key" onclick="window.insertChar('ç')">ç</button>
-            <button class="key" onclick="window.insertChar('ê')">ê</button>
-            <button class="key" onclick="window.insertChar('î')">î</button>
+    <!-- ÉTAPE 3 : Quantité -->
+    <div id="step-quantity" class="step">
+        <p style="text-align:center">Nombre de verbes pour ce défi :</p>
+        <input type="number" id="nb-verbes" value="10" min="1" max="50">
+        <button class="btn-choice" onclick="startChallenge(0)">Mode Illimité ∞</button>
+        <button class="btn-full" onclick="startChallenge()">Commencer !</button>
+    </div>
+
+    <!-- ÉTAPE 4 : Le Jeu -->
+    <div id="step-game" class="step">
+        <div id="game-progress" style="font-size: 0.8rem; text-align: right;">0 / 10</div>
+        <div class="verb-card">
+            <div id="verb-name">---</div>
+            <div id="tense-name" style="font-style:italic; color:#666; font-size: 0.9rem;">-</div>
+            <div id="pronoun">---</div>
+            <input type="text" id="answer-input" placeholder="Réponse..." autocomplete="off" spellcheck="false">
+            <div class="keyboard">
+                <button class="key" onclick="insertChar('é')">é</button>
+                <button class="key" onclick="insertChar('è')">è</button>
+                <button class="key" onclick="insertChar('à')">à</button>
+                <button class="key" onclick="insertChar('ç')">ç</button>
+                <button class="key" onclick="insertChar('ê')">ê</button>
+                <button class="key" onclick="insertChar('î')">î</button>
+            </div>
+        </div>
+        <button class="btn-full" id="btn-submit" onclick="checkAnswer()">Vérifier</button>
+        <div id="feedback" class="feedback"></div>
+    </div>
+
+    <!-- ÉTAPE 5 : Résultats -->
+    <div id="step-results" class="step">
+        <div class="results-card">
+            <h2>Challenge Terminé !</h2>
+            <div class="score-big" id="final-score">0 / 0</div>
+            <p id="final-percent">0% de réussite</p>
+            
+            <div id="error-review" style="text-align:left; margin-top:20px;">
+                <!-- Affichera la table en cas d'erreur -->
+            </div>
+
+            <button class="btn-full" onclick="location.reload()">Recommencer</button>
         </div>
     </div>
-
-    <button id="btn-submit" class="btn-check" onclick="window.checkAnswer()">Vérifier</button>
-    <div id="feedback" class="feedback"></div>
 </div>
 
 <script>
     let fullDatabase = [];
     let currentV, currentTense, currentPIdx;
-    let score = 0, total = 0;
-    const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
+    let score = 0, total = 0, targetNb = 10;
+    let selectedLevel = 'A1';
+    let selectedTenses = [];
+    let lastErrorTable = "";
     const levelsOrder = ["A1", "A2", "B1", "B2"];
+    const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
+    const tensesList = ["Présent", "Imparfait", "Passé composé", "Plus-que-parfait", "Futur simple", "Conditionnel présent", "Subjonctif présent", "Impératif présent"];
 
-    window.toggleCustomTenses = function() {
-        const select = document.getElementById('level-select');
-        document.getElementById('custom-box').style.display = (select.value === "CUSTOM") ? "grid" : "none";
-    };
+    // Navigation entre étapes
+    function goToStep(stepId) {
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById(stepId).classList.add('active');
+        if(stepId === 'step-custom') renderTenseButtons();
+    }
 
-    window.insertChar = function(char) {
-        const input = document.getElementById('answer-input');
-        const start = input.selectionStart;
-        input.value = input.value.slice(0, start) + char + input.value.slice(input.selectionEnd);
-        input.focus();
-        input.setSelectionRange(start + 1, start + 1);
-    };
+    // Génération des boutons de temps (Mode Custom)
+    function renderTenseButtons() {
+        const container = document.getElementById('tense-buttons');
+        container.innerHTML = "";
+        tensesList.forEach(t => {
+            const btn = document.createElement('button');
+            btn.className = "btn-choice";
+            btn.innerText = t;
+            btn.onclick = () => {
+                btn.classList.toggle('selected');
+                if(selectedTenses.includes(t)) selectedTenses = selectedTenses.filter(item => item !== t);
+                else selectedTenses.push(t);
+            };
+            container.appendChild(btn);
+        });
+    }
 
-    window.initJeu = function() {
-        if (fullDatabase.length === 0) return;
+    function selectLevel(lvl) {
+        selectedLevel = lvl;
+        if (lvl === "A1") selectedTenses = ["Présent"];
+        else if (lvl === "A2") selectedTenses = ["Présent", "Imparfait", "Passé composé", "Futur simple", "Conditionnel présent", "Impératif présent"];
+        else selectedTenses = ["Présent", "Imparfait", "Passé composé", "Plus-que-parfait", "Futur simple", "Conditionnel présent", "Subjonctif présent"];
+        goToStep('step-quantity');
+    }
 
-        const selectedLevel = document.getElementById('level-select').value;
-        let allowedTenses = [];
+    function confirmCustomTenses() {
+        if(selectedTenses.length === 0) return alert("Choisissez au moins un temps !");
+        selectedLevel = "CUSTOM";
+        goToStep('step-quantity');
+    }
+
+    function startChallenge(nb) {
+        targetNb = (nb === 0) ? 999 : parseInt(document.getElementById('nb-verbes').value);
+        score = 0; total = 0;
+        goToStep('step-game');
+        initJeu();
+    }
+
+    function initJeu() {
+        if (total >= targetNb) return showResults();
         
-        // 1. Définir les temps autorisés par niveau
-        if (selectedLevel === "A1") allowedTenses = ["Présent"];
-        else if (selectedLevel === "A2") allowedTenses = ["Présent", "Imparfait", "Passé composé", "Futur simple", "Conditionnel présent", "Impératif présent"];
-        else if (selectedLevel === "B1") allowedTenses = ["Présent", "Imparfait", "Passé composé", "Plus-que-parfait", "Futur simple", "Conditionnel présent", "Subjonctif présent"];
-        else if (selectedLevel === "B2") allowedTenses = ["Présent", "Imparfait", "Passé composé", "Plus-que-parfait", "Futur simple", "Conditionnel présent", "Subjonctif présent"];
-        else if (selectedLevel === "CUSTOM") allowedTenses = Array.from(document.querySelectorAll('.tense-opt:checked')).map(cb => cb.value);
-
-        // 2. Filtrer les verbes (CUMULATIF : B1 inclut les verbes A1 et A2)
-        let filteredVerbs;
-        if (selectedLevel === "CUSTOM") {
-            filteredVerbs = fullDatabase;
-        } else {
+        document.getElementById('game-progress').innerText = `${total + 1} / ${targetNb}`;
+        
+        let verbFilter = (v) => true;
+        if (selectedLevel !== "CUSTOM") {
             const maxIdx = levelsOrder.indexOf(selectedLevel);
-            filteredVerbs = fullDatabase.filter(v => levelsOrder.indexOf(v.niveau) <= maxIdx);
+            verbFilter = (v) => levelsOrder.indexOf(v.niveau) <= maxIdx;
         }
 
-        // 3. Tirage au sort
+        let filteredVerbs = fullDatabase.filter(verbFilter);
         let valid = false;
-        let attempts = 0;
-        while(!valid && attempts < 200) {
-            attempts++;
+        while(!valid) {
             let tempV = filteredVerbs[Math.floor(Math.random() * filteredVerbs.length)];
-            // On ne garde que les temps du verbe qui sont autorisés pour le niveau choisi
-            let possibleTenses = Object.keys(tempV.conjugaisons).filter(t => allowedTenses.includes(t));
-            
-            if (possibleTenses.length > 0) {
-                let tempTense = possibleTenses[Math.floor(Math.random() * possibleTenses.length)];
-                
-                // Restriction A2 Conditionnel
-                if (selectedLevel === "A2" && tempTense === "Conditionnel présent") {
-                    if (!["vouloir", "aimer", "pouvoir", "devoir"].includes(tempV.verbe)) continue;
-                }
-
+            let possible = Object.keys(tempV.conjugaisons).filter(t => selectedTenses.includes(t));
+            if (possible.length > 0) {
                 currentV = tempV;
-                currentTense = tempTense;
+                currentTense = possible[Math.floor(Math.random() * possible.length)];
                 valid = true;
             }
         }
 
-        if (!valid) {
-            document.getElementById('verb-name').innerText = "Aucun verbe trouvé";
-            return;
-        }
+        do { currentPIdx = Math.floor(Math.random() * 6); } 
+        while (currentV.conjugaisons[currentTense][currentPIdx] === "");
 
-        // Tirage personne (en évitant les cases vides pour l'impératif)
-        let pAttempts = 0;
-        do {
-            currentPIdx = Math.floor(Math.random() * 6);
-            pAttempts++;
-        } while (currentV.conjugaisons[currentTense][currentPIdx] === "" && pAttempts < 10);
-
-        document.getElementById('answer-input').disabled = false;
         document.getElementById('verb-name').innerText = currentV.verbe;
         document.getElementById('tense-name').innerText = currentTense;
         document.getElementById('pronoun').innerText = pronoms[currentPIdx] + " ...";
         document.getElementById('answer-input').value = "";
+        document.getElementById('answer-input').disabled = false;
         document.getElementById('feedback').innerText = "";
         document.getElementById('answer-input').focus();
-    };
+    }
 
-    window.checkAnswer = function() {
+    function checkAnswer() {
         const inputField = document.getElementById('answer-input');
-        if (inputField.disabled) return;
         const solution = currentV.conjugaisons[currentTense][currentPIdx].toLowerCase();
         const input = inputField.value.trim().toLowerCase();
+        
         inputField.disabled = true;
         total++;
+
         if (input === solution) {
             score++;
-            document.getElementById('feedback').innerHTML = "<span style='color:var(--secondary)'>✨ Bravo !</span>";
-            setTimeout(window.initJeu, 1000);
+            document.getElementById('feedback').innerHTML = "<span style='color:var(--secondary)'>✅ Bravo !</span>";
+            setTimeout(initJeu, 1000);
         } else {
-            document.getElementById('feedback').innerHTML = `<span style='color:var(--error)'>❌ C'était : <b>${solution}</b></span>`;
-            setTimeout(window.initJeu, 2500);
+            document.getElementById('feedback').innerHTML = `<span style='color:var(--error)'>❌ Non : <b>${solution}</b></span>`;
+            // Stockage de la table pour le résumé
+            lastErrorTable = generateReviewTable(currentV, currentTense, currentPIdx);
+            setTimeout(initJeu, 2500);
         }
-        document.getElementById('score').innerText = score;
-        document.getElementById('total').innerText = total;
-    };
+    }
 
-    fetch('verbes.json').then(res => res.json()).then(data => {
-        fullDatabase = data;
-        window.initJeu();
+    function generateReviewTable(verb, tense, errorIdx) {
+        let html = `<h3>Révision : ${verb.verbe} (${tense})</h3><table class="review-table">`;
+        verb.conjugaisons[tense].forEach((conj, idx) => {
+            if(conj === "") return;
+            const isError = (idx === errorIdx) ? "class='error-highlight'" : "";
+            html += `<tr><td>${pronoms[idx]}</td><td ${isError}>${conj}</td></tr>`;
+        });
+        html += "</table>";
+        return html;
+    }
+
+    function showResults() {
+        goToStep('step-results');
+        document.getElementById('final-score').innerText = `${score} / ${total}`;
+        const percent = Math.round((score/total)*100);
+        document.getElementById('final-percent').innerText = `${percent}% de réussite`;
+        
+        if (score < total) {
+            document.getElementById('error-review').innerHTML = "<p>Dernière erreur commise :</p>" + lastErrorTable;
+        }
+    }
+
+    function insertChar(char) {
+        const input = document.getElementById('answer-input');
+        const start = input.selectionStart;
+        input.value = input.value.slice(0, start) + char + input.value.slice(input.selectionEnd);
+        input.focus();
+    }
+
+    // Touche Entrée
+    document.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const activeStep = document.querySelector('.step.active').id;
+            if(activeStep === 'step-game') checkAnswer();
+            else if(activeStep === 'step-quantity') startChallenge();
+        }
     });
 
-    document.getElementById('answer-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') window.checkAnswer();
-    });
+    // Chargement initial
+    fetch('verbes.json').then(res => res.json()).then(data => { fullDatabase = data; });
 </script>
 </body>
 </html>
