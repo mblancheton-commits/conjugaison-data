@@ -38,7 +38,6 @@
 <div class="app-container">
     <h1 id="main-title">Conju-Coach ✍️</h1>
 
-    <!-- ÉTAPE 0 : Choix Langue -->
     <div id="step-lang" class="step active">
         <p style="text-align:center">Choisissez votre langue / 언어를 선택하세요</p>
         <div class="btn-grid">
@@ -47,7 +46,6 @@
         </div>
     </div>
 
-    <!-- ÉTAPE 1 : Choix du Niveau -->
     <div id="step-level" class="step">
         <p id="label-level" style="text-align:center">Choisissez votre niveau DELF :</p>
         <div class="btn-grid">
@@ -59,14 +57,12 @@
         <button id="btn-custom-trigger" class="btn-choice" style="width:100%; margin-top:10px;" onclick="goToStep('step-custom')">⚙️ Personnalisé</button>
     </div>
 
-    <!-- ÉTAPE 2 : Personnalisation -->
     <div id="step-custom" class="step">
         <p id="label-tenses" style="text-align:center">Quels temps voulez-vous réviser ?</p>
         <div class="btn-grid" id="tense-buttons"></div>
         <button id="btn-custom-next" class="btn-full" onclick="confirmCustomTenses()">Suivant ➔</button>
     </div>
 
-    <!-- ÉTAPE 3 : Quantité -->
     <div id="step-quantity" class="step">
         <p id="label-quantity" style="text-align:center">Combien de verbes pour ce défi ?</p>
         <input type="number" id="nb-verbes" value="10" min="1" max="50">
@@ -76,7 +72,6 @@
         </div>
     </div>
 
-    <!-- ÉTAPE 4 : Jeu -->
     <div id="step-game" class="step">
         <div id="game-progress" style="text-align: right; font-weight: bold; color: var(--primary);">0 / 10</div>
         <div class="verb-card">
@@ -97,7 +92,6 @@
         <div id="feedback" style="text-align:center; font-weight:bold; min-height:40px; margin-top:15px;"></div>
     </div>
 
-    <!-- ÉTAPE 5 : Résultats -->
     <div id="step-results" class="step">
         <div class="results-header">
             <div class="score-big" id="final-score">0 / 0</div>
@@ -187,6 +181,20 @@
         "B1": { "Présent": 10, "Passé composé": 20, "Imparfait": 20, "Futur simple": 10, "Impératif présent": 10, "Conditionnel présent": 10, "Plus-que-parfait": 10, "Subjonctif présent": 10 },
         "B2": { "Présent": 5, "Passé composé": 20, "Imparfait": 10, "Futur simple": 10, "Impératif présent": 5, "Conditionnel présent": 10, "Plus-que-parfait": 10, "Subjonctif présent": 30 }
     };
+
+    // Fonction pour gérer l'élision (Je -> J')
+    function getPronoun(pIdx, verbForm) {
+        let p = pronoms[pIdx];
+        if (pIdx === 0) { // Uniquement pour "Je"
+            const firstLetter = verbForm.normalize("NFD").replace(/[\u0300-\u036f]/g, "").charAt(0).toLowerCase();
+            const vowels = ['a', 'e', 'i', 'o', 'u', 'y'];
+            if (vowels.includes(firstLetter)) {
+                return "J'";
+            }
+            return "Je ";
+        }
+        return p + " ";
+    }
 
     function setLang(l) {
         currentLang = l;
@@ -278,7 +286,11 @@
 
         document.getElementById('verb-name').innerText = currentV.verbe;
         document.getElementById('tense-display').innerText = (currentLang === 'ko') ? tenseMap[currentTense].ko : currentTense;
-        document.getElementById('pronoun').innerText = pronoms[currentPIdx] + " ...";
+        
+        // Elision dynamique ici
+        const solutionExample = currentV.conjugaisons[currentTense][currentPIdx];
+        document.getElementById('pronoun').innerText = getPronoun(currentPIdx, solutionExample) + "...";
+        
         const input = document.getElementById('answer-input');
         input.value = ""; input.disabled = false;
         document.getElementById('feedback').innerText = "";
@@ -327,7 +339,7 @@
             let html = `<div class="review-block"><h3>${m.verb.verbe} - ${displayTense}</h3><table class="review-table">`;
             m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
                 if(conj === "") return;
-                html += `<tr ${idx === m.errorIdx ? "class='error-row'" : ""}><td>${pronoms[idx]}</td><td>${conj} ${idx === m.errorIdx ? i18n[currentLang].errorLabel : ''}</td></tr>`;
+                html += `<tr ${idx === m.errorIdx ? "class='error-row'" : ""}><td>${getPronoun(idx, conj)}</td><td>${conj} ${idx === m.errorIdx ? i18n[currentLang].errorLabel : ''}</td></tr>`;
             });
             container.innerHTML += html + "</table></div>";
         });
@@ -344,7 +356,7 @@
                 corps += `\n- ${m.verb.verbe.toUpperCase()} (${m.tense})\n`;
                 m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
                     if(conj === "") return;
-                    corps += `${pronoms[idx]} : ${conj}${idx === m.errorIdx ? " <-- ERREUR" : ""}\n`;
+                    corps += `${getPronoun(idx, conj)}: ${conj}${idx === m.errorIdx ? " <-- ERREUR" : ""}\n`;
                 });
             });
         }
