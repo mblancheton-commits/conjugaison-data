@@ -7,7 +7,7 @@
     <style>
         :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; }
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--dark); }
+        body { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--dark); }
         .app-container { background: white; width: 95%; max-width: 550px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 500px; display: flex; flex-direction: column; margin: 20px 0; }
         h1 { text-align: center; font-size: 1.5rem; margin-top: 0; }
         .step { display: none; flex-direction: column; gap: 15px; animation: fadeIn 0.3s; }
@@ -36,39 +36,52 @@
 <body>
 
 <div class="app-container">
-    <h1>Conju-Coach ✍️</h1>
+    <h1 id="main-title">Conju-Coach ✍️</h1>
 
-    <div id="step-level" class="step active">
-        <p style="text-align:center">Niveau DELF :</p>
+    <!-- ÉTAPE 0 : Choix Langue -->
+    <div id="step-lang" class="step active">
+        <p style="text-align:center">Choisissez votre langue / 언어를 선택하세요</p>
+        <div class="btn-grid">
+            <button class="btn-choice" onclick="setLang('fr')">Français 🇫🇷</button>
+            <button class="btn-choice" onclick="setLang('ko')">한국어 🇰🇷</button>
+        </div>
+    </div>
+
+    <!-- ÉTAPE 1 : Choix du Niveau -->
+    <div id="step-level" class="step">
+        <p id="label-level" style="text-align:center">Choisissez votre niveau DELF :</p>
         <div class="btn-grid">
             <button class="btn-choice" onclick="selectLevel('A1')">A1</button>
             <button class="btn-choice" onclick="selectLevel('A2')">A2</button>
             <button class="btn-choice" onclick="selectLevel('B1')">B1</button>
             <button class="btn-choice" onclick="selectLevel('B2')">B2</button>
         </div>
-        <button class="btn-choice" style="width:100%; margin-top:10px;" onclick="goToStep('step-custom')">⚙️ Personnalisé</button>
+        <button id="btn-custom-trigger" class="btn-choice" style="width:100%; margin-top:10px;" onclick="goToStep('step-custom')">⚙️ Personnalisé</button>
     </div>
 
+    <!-- ÉTAPE 2 : Personnalisation -->
     <div id="step-custom" class="step">
-        <p style="text-align:center">Quels temps ?</p>
+        <p id="label-tenses" style="text-align:center">Quels temps voulez-vous réviser ?</p>
         <div class="btn-grid" id="tense-buttons"></div>
-        <button class="btn-full" onclick="confirmCustomTenses()">Suivant ➔</button>
+        <button id="btn-custom-next" class="btn-full" onclick="confirmCustomTenses()">Suivant ➔</button>
     </div>
 
+    <!-- ÉTAPE 3 : Quantité -->
     <div id="step-quantity" class="step">
-        <p style="text-align:center">Nombre de verbes :</p>
+        <p id="label-quantity" style="text-align:center">Combien de verbes pour ce défi ?</p>
         <input type="number" id="nb-verbes" value="10" min="1" max="50">
         <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="btn-choice" style="flex:1" onclick="startChallenge(999)">Infini ∞</button>
-            <button class="btn-full" style="flex:2; margin:0" onclick="startChallenge()">Commencer !</button>
+            <button id="btn-infinite" class="btn-choice" style="flex:1" onclick="startChallenge(999)">Infini ∞</button>
+            <button id="btn-start" class="btn-full" style="flex:2; margin:0" onclick="startChallenge()">Commencer !</button>
         </div>
     </div>
 
+    <!-- ÉTAPE 4 : Jeu -->
     <div id="step-game" class="step">
         <div id="game-progress" style="text-align: right; font-weight: bold; color: var(--primary);">0 / 10</div>
         <div class="verb-card">
             <div id="verb-name">---</div>
-            <div id="tense-name" style="font-style:italic; color:#666;">-</div>
+            <div id="tense-display" style="font-style:italic; color:#666;">-</div>
             <div id="pronoun">---</div>
             <input type="text" id="answer-input" placeholder="Réponse..." autocomplete="off" spellcheck="false">
             <div class="keyboard">
@@ -80,25 +93,27 @@
                 <button class="key" onclick="insertChar('î')">î</button>
             </div>
         </div>
-        <button class="btn-full" id="btn-submit" onclick="checkAnswer()">Vérifier</button>
+        <button id="btn-submit" class="btn-full" onclick="checkAnswer()">Vérifier</button>
         <div id="feedback" style="text-align:center; font-weight:bold; min-height:40px; margin-top:15px;"></div>
     </div>
 
+    <!-- ÉTAPE 5 : Résultats -->
     <div id="step-results" class="step">
         <div class="results-header">
             <div class="score-big" id="final-score">0 / 0</div>
-            <p id="final-percent" style="font-weight:bold">0%</p>
+            <p id="final-percent" style="font-weight:bold">0% de réussite</p>
         </div>
         <div class="email-section">
-            <textarea id="user-comment" rows="2" placeholder="Un commentaire ?"></textarea>
-            <button class="btn-full" style="background:var(--primary)" onclick="sendEmail()">📧 Crâner à Matthieu</button>
+            <textarea id="user-comment" rows="2"></textarea>
+            <button id="btn-email" class="btn-full" style="background:var(--primary)" onclick="sendEmail()">📧 Crâner à Matthieu</button>
         </div>
         <div id="mistake-container"></div>
-        <button class="btn-full" onclick="location.reload()">Recommencer</button>
+        <button id="btn-restart" class="btn-full" onclick="location.reload()">Recommencer</button>
     </div>
 </div>
 
 <script>
+    let currentLang = 'fr';
     let fullDatabase = [];
     let currentV, currentTense, currentPIdx;
     let score = 0, total = 0, targetNb = 10;
@@ -110,13 +125,86 @@
     const levelsOrder = ["A1", "A2", "B1", "B2"];
     const a1Irregulars = ["être", "avoir", "faire", "aller", "prendre", "vouloir", "pouvoir"];
 
-    // TES TABLES DE PROBABILITÉS (Poids)
+    const tenseMap = {
+        "Présent": { ko: "현재 (présent)" },
+        "Imparfait": { ko: "반과거 (imparfait)" },
+        "Passé composé": { ko: "복합과거 (passé composé)" },
+        "Plus-que-parfait": { ko: "대과거 (plus-que-parfait)" },
+        "Futur simple": { ko: "단순미래 (futur simple)" },
+        "Conditionnel présent": { ko: "조건법 / 가정법 (conditionnel)" },
+        "Subjonctif présent": { ko: "접속법 현재 (subjonctif présent)" },
+        "Impératif présent": { ko: "명령법 현재 (impératif présent)" }
+    };
+
+    const i18n = {
+        fr: {
+            levelLabel: "Choisissez votre niveau DELF :",
+            customBtn: "⚙️ Personnalisé",
+            tensesLabel: "Quels temps voulez-vous réviser ?",
+            nextBtn: "Suivant ➔",
+            qtyLabel: "Combien de verbes pour ce défi ?",
+            infinite: "Infini ∞",
+            startBtn: "Commencer !",
+            checkBtn: "Vérifier",
+            placeholder: "Réponse...",
+            commentPlaceholder: "Un commentaire ?",
+            emailBtn: "📧 Crâner à Matthieu",
+            restartBtn: "Recommencer",
+            successMsg: "✨ Bravo !",
+            errorMsg: "❌ Non :",
+            resultsTitle: "Résultats",
+            statsLabel: "de réussite",
+            reviewTitle: "Tables à réviser :",
+            perfectMsg: "Zéro faute ! 🏆",
+            errorLabel: " <-- ERREUR"
+        },
+        ko: {
+            levelLabel: "델프 레벨을 선택하세요 :",
+            customBtn: "⚙️ 개인 설정",
+            tensesLabel: "어떤 시제를 연습하고 싶나요?",
+            nextBtn: "다음 ➔",
+            qtyLabel: "몇 개의 동사를 연습할까요?",
+            infinite: "무한 모드 ∞",
+            startBtn: "시작하기!",
+            checkBtn: "확인하기",
+            placeholder: "답을 입력하세요...",
+            commentPlaceholder: "의견을 남겨주세요...",
+            emailBtn: "📧 선생님께 결과 보내기",
+            restartBtn: "다시 시작하기",
+            successMsg: "✨ 잘했어요!",
+            errorMsg: "❌ 틀렸어요. 정답은 :",
+            resultsTitle: "결과",
+            statsLabel: "성공률",
+            reviewTitle: "복습해야 할 표 :",
+            perfectMsg: "완벽해요! 최고입니다! 🏆",
+            errorLabel: " <-- 내 오답"
+        }
+    };
+
     const tenseWeights = {
         "A1": { "Présent": 100 },
         "A2": { "Présent": 20, "Passé composé": 30, "Imparfait": 30, "Conditionnel présent": 20, "Impératif présent": 10 },
         "B1": { "Présent": 10, "Passé composé": 20, "Imparfait": 20, "Futur simple": 10, "Impératif présent": 10, "Conditionnel présent": 10, "Plus-que-parfait": 10, "Subjonctif présent": 10 },
         "B2": { "Présent": 5, "Passé composé": 20, "Imparfait": 10, "Futur simple": 10, "Impératif présent": 5, "Conditionnel présent": 10, "Plus-que-parfait": 10, "Subjonctif présent": 30 }
     };
+
+    function setLang(l) {
+        currentLang = l;
+        const text = i18n[l];
+        document.getElementById('label-level').innerText = text.levelLabel;
+        document.getElementById('btn-custom-trigger').innerText = text.customBtn;
+        document.getElementById('label-tenses').innerText = text.tensesLabel;
+        document.getElementById('btn-custom-next').innerText = text.nextBtn;
+        document.getElementById('label-quantity').innerText = text.qtyLabel;
+        document.getElementById('btn-infinite').innerText = text.infinite;
+        document.getElementById('btn-start').innerText = text.startBtn;
+        document.getElementById('btn-submit').innerText = text.checkBtn;
+        document.getElementById('answer-input').placeholder = text.placeholder;
+        document.getElementById('user-comment').placeholder = text.commentPlaceholder;
+        document.getElementById('btn-email').innerText = text.emailBtn;
+        document.getElementById('btn-restart').innerText = text.restartBtn;
+        goToStep('step-level');
+    }
 
     function goToStep(id) {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
@@ -127,11 +215,10 @@
     function renderTenseButtons() {
         const container = document.getElementById('tense-buttons');
         container.innerHTML = "";
-        const allT = ["Présent", "Imparfait", "Passé composé", "Plus-que-parfait", "Futur simple", "Conditionnel présent", "Subjonctif présent", "Impératif présent"];
-        allT.forEach(t => {
+        Object.keys(tenseMap).forEach(t => {
             const btn = document.createElement('button');
             btn.className = "btn-choice";
-            btn.innerText = t;
+            btn.innerText = (currentLang === 'ko') ? tenseMap[t].ko : t;
             btn.onclick = () => {
                 btn.classList.toggle('selected');
                 if(selectedTenses.includes(t)) selectedTenses = selectedTenses.filter(x => x !== t);
@@ -148,7 +235,7 @@
     }
 
     function confirmCustomTenses() {
-        if(selectedTenses.length === 0) return alert("Choisissez un temps !");
+        if(selectedTenses.length === 0) return alert(currentLang === 'ko' ? "시제를 선택해 주세요!" : "Choisissez au moins un temps !");
         selectedLevel = "CUSTOM";
         goToStep('step-quantity');
     }
@@ -166,31 +253,20 @@
         
         let valid = false;
         let attempts = 0;
-
         while(!valid && attempts < 500) {
             attempts++;
-            
             let targetTense = pickWeightedTense(selectedTenses);
-
-            // Filtrer les verbes par niveau cumulatif
             const maxLvlIdx = levelsOrder.indexOf(selectedLevel === "CUSTOM" ? "B2" : selectedLevel);
             let pool = fullDatabase.filter(v => levelsOrder.indexOf(v.niveau) <= maxLvlIdx);
-
-            // Filtre A1 50/50
             if (selectedLevel === "A1") {
                 const isIrregTarget = Math.random() < 0.5;
                 let subPool = pool.filter(v => isIrregTarget ? a1Irregulars.includes(v.verbe) : !a1Irregulars.includes(v.verbe));
                 if (subPool.length > 0) pool = subPool;
             }
-
-            // Filtrer verbes possédant le temps
             let finalPool = pool.filter(v => v.conjugaisons[targetTense]);
-            
-            // Restriction A2 Conditionnel
             if (selectedLevel === "A2" && targetTense === "Conditionnel présent") {
                 finalPool = finalPool.filter(v => ["vouloir", "aimer", "pouvoir", "devoir"].includes(v.verbe));
             }
-
             if (finalPool.length > 0) {
                 currentV = finalPool[Math.floor(Math.random() * finalPool.length)];
                 currentTense = targetTense;
@@ -198,11 +274,10 @@
             }
         }
 
-        do { currentPIdx = Math.floor(Math.random() * 6); } 
-        while (currentV.conjugaisons[currentTense][currentPIdx] === "");
+        do { currentPIdx = Math.floor(Math.random() * 6); } while (currentV.conjugaisons[currentTense][currentPIdx] === "");
 
         document.getElementById('verb-name').innerText = currentV.verbe;
-        document.getElementById('tense-name').innerText = currentTense;
+        document.getElementById('tense-display').innerText = (currentLang === 'ko') ? tenseMap[currentTense].ko : currentTense;
         document.getElementById('pronoun').innerText = pronoms[currentPIdx] + " ...";
         const input = document.getElementById('answer-input');
         input.value = ""; input.disabled = false;
@@ -231,10 +306,10 @@
 
         if (input === solution) {
             score++;
-            document.getElementById('feedback').innerHTML = "<span style='color:var(--secondary)'>✅ Bravo !</span>";
+            document.getElementById('feedback').innerHTML = `<span style='color:var(--secondary)'>${i18n[currentLang].successMsg}</span>`;
             setTimeout(initJeu, 1000);
         } else {
-            document.getElementById('feedback').innerHTML = `<span style='color:var(--error)'>❌ Non : <b>${solution}</b></span>`;
+            document.getElementById('feedback').innerHTML = `<span style='color:var(--error)'>${i18n[currentLang].errorMsg} <b>${solution}</b></span>`;
             const alreadyNoted = mistakeTracker.some(m => m.verb.verbe === currentV.verbe && m.tense === currentTense);
             if (!alreadyNoted) mistakeTracker.push({verb: currentV, tense: currentTense, errorIdx: currentPIdx});
             setTimeout(initJeu, 2500);
@@ -244,21 +319,22 @@
     function showResults() {
         goToStep('step-results');
         document.getElementById('final-score').innerText = `${score} / ${total}`;
-        document.getElementById('final-percent').innerText = `${Math.round((score/total)*100)}% de réussite`;
+        document.getElementById('final-percent').innerText = `${Math.round((score/total)*100)}% ${i18n[currentLang].statsLabel}`;
         const container = document.getElementById('mistake-container');
-        container.innerHTML = mistakeTracker.length > 0 ? "<h3>Tables à réviser :</h3>" : "<h3>Zéro faute ! 🏆</h3>";
+        container.innerHTML = mistakeTracker.length > 0 ? `<h3>${i18n[currentLang].reviewTitle}</h3>` : `<h3>${i18n[currentLang].perfectMsg}</h3>`;
         mistakeTracker.forEach(m => {
-            let html = `<div class="review-block"><h3>${m.verb.verbe} - ${m.tense}</h3><table class="review-table">`;
+            const displayTense = (currentLang === 'ko') ? tenseMap[m.tense].ko : m.tense;
+            let html = `<div class="review-block"><h3>${m.verb.verbe} - ${displayTense}</h3><table class="review-table">`;
             m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
                 if(conj === "") return;
-                html += `<tr ${idx === m.errorIdx ? "class='error-row'" : ""}><td>${pronoms[idx]}</td><td>${conj}</td></tr>`;
+                html += `<tr ${idx === m.errorIdx ? "class='error-row'" : ""}><td>${pronoms[idx]}</td><td>${conj} ${idx === m.errorIdx ? i18n[currentLang].errorLabel : ''}</td></tr>`;
             });
             container.innerHTML += html + "</table></div>";
         });
     }
 
     function sendEmail() {
-        const emailProf = "m.blancheton@gmail.com"; // <--- REMPLACE ICI
+        const emailProf = "m.blancheton@gmail.com";
         const sujet = `Regarde comme je suis trop forte ! (${selectedLevel})`;
         const commentaire = document.getElementById('user-comment').value || "Aucun commentaire.";
         let corps = `Score : ${score} / ${total} (${Math.round((score/total)*100)}%)\nCommentaire : ${commentaire}\n\n`;
