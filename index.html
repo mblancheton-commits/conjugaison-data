@@ -19,7 +19,6 @@
         
         input[type="text"] { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.2rem; text-align: center; outline: none; }
         
-        /* Correction de l'alignement des coches */
         .custom-tenses {
             display: none;
             grid-template-columns: 1fr 1fr;
@@ -31,20 +30,8 @@
             border: 1px solid #eee;
             text-align: left;
         }
-        .custom-tenses label {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            user-select: none;
-        }
-        .custom-tenses input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            margin: 0;
-            cursor: pointer;
-        }
+        .custom-tenses label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem; }
+        .custom-tenses input[type="checkbox"] { width: 18px; height: 18px; margin: 0; cursor: pointer; }
 
         .keyboard { display: flex; justify-content: center; gap: 5px; margin: 10px 0; flex-wrap: wrap; }
         .key { background: white; border: 1px solid #ddd; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 0 #ccc; }
@@ -92,4 +79,8 @@
         <input type="text" id="answer-input" placeholder="Réponse..." autocomplete="off" spellcheck="false">
         
         <div class="keyboard">
-            <butt
+            <button class="key" onclick="insertChar('é')">é</button>
+            <button class="key" onclick="insertChar('è')">è</button>
+            <button class="key" onclick="insertChar('à')">à</button>
+            <button class="key" onclick="insertChar('ç')">ç</button>
+            <button class="key" onclick="insertChar('ê')">ê</
