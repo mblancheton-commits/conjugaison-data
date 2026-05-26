@@ -20,7 +20,7 @@
         .btn-full { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--dark); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
         
         .search-container { position: relative; width: 100%; }
-        .suggestion-list { background: white; border: 1px solid #ddd; border-radius: 10px; max-height: 150px; overflow-y: auto; margin-top: 5px; display: none; z-index: 10; }
+        .suggestion-list { background: white; border: 1px solid #ddd; border-radius: 10px; max-height: 150px; overflow-y: auto; margin-top: 5px; display: none; z-index: 10; position: absolute; width: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .suggestion-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; text-align: left; }
         .suggestion-item:hover { background: #f0f7ff; }
 
@@ -290,13 +290,19 @@
             let html = `<div class="review-block"><h3>${displayTense}</h3><table class="review-table">`;
             verb.conjugaisons[t].forEach((conj, idx) => {
                 if (conj === "") return;
-                html += `<tr><td>${window.getPronoun(idx, conj)}</td><td><b>${conj}</b></td></tr>`;
+                html += `<tr><td>${window.getPronoun(idx, conj, t)}</td><td><b>${conj}</b></td></tr>`;
             });
             container.innerHTML += html + `</table></div>`;
         });
     };
 
-    window.getPronoun = function(pIdx, verbForm) {
+    window.getPronoun = function(pIdx, verbForm, tName) {
+        // CAS PARTICULIER : IMPÉRATIF
+        if (tName === "Impératif présent") {
+            return "(" + pronoms[pIdx] + ") ";
+        }
+
+        // CAS GÉNÉRAL : ÉLISION POUR "JE"
         if (pIdx === 0) {
             const firstLetter = verbForm.normalize("NFD").replace(/[\u0300-\u036f]/g, "").charAt(0).toLowerCase();
             const vowels = ['a', 'e', 'i', 'o', 'u', 'y'];
@@ -354,7 +360,7 @@
         document.getElementById('verb-name').innerText = currentV.verbe;
         document.getElementById('verb-traduction').innerText = currentV.traduction ? `(${currentV.traduction})` : "";
         document.getElementById('tense-display').innerText = (currentLang === 'ko') ? tenseMap[currentTense].ko : currentTense;
-        document.getElementById('pronoun').innerText = window.getPronoun(currentPIdx, currentV.conjugaisons[currentTense][currentPIdx]) + "...";
+        document.getElementById('pronoun').innerText = window.getPronoun(currentPIdx, currentV.conjugaisons[currentTense][currentPIdx], currentTense) + "...";
         const input = document.getElementById('answer-input');
         input.value = ""; input.disabled = false;
         document.getElementById('feedback').innerText = "";
@@ -403,7 +409,7 @@
             let html = `<div class="review-block"><h3>${m.verb.verbe}${trad} - ${displayTense}</h3><table class="review-table">`;
             m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
                 if(conj === "") return;
-                html += `<tr ${idx === m.errorIdx ? "class='error-row'" : ""}><td>${window.getPronoun(idx, conj)}</td><td>${conj} ${idx === m.errorIdx ? i18n[currentLang].errorLabel : ''}</td></tr>`;
+                html += `<tr ${idx === m.errorIdx ? "class='error-row'" : ""}><td>${window.getPronoun(idx, conj, m.tense)}</td><td>${conj} ${idx === m.errorIdx ? i18n[currentLang].errorLabel : ''}</td></tr>`;
             });
             container.innerHTML += html + "</table></div>";
         });
@@ -421,7 +427,7 @@
                 corps += `\n- ${m.verb.verbe.toUpperCase()}${trad} (${m.tense})\n`;
                 m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
                     if(conj === "") return;
-                    corps += `${window.getPronoun(idx, conj)}: ${conj}${idx === m.errorIdx ? " <-- ERREUR" : ""}\n`;
+                    corps += `${window.getPronoun(idx, conj, m.tense)}: ${conj}${idx === m.errorIdx ? " <-- ERREUR" : ""}\n`;
                 });
             });
         }
@@ -444,16 +450,7 @@
         }
     });
 
-    fetch('verbes.json')
-        .then(res => res.json())
-        .then(data => { 
-            fullDatabase = data; 
-            console.log("BDD chargée : " + data.length + " verbes.");
-        })
-        .catch(err => {
-            console.error("Erreur JSON:", err);
-            alert("Erreur de chargement de la base de données.");
-        });
+    fetch('verbes.json').then(res => res.json()).then(data => { fullDatabase = data; });
 </script>
 
 </body>
