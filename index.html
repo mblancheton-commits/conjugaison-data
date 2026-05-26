@@ -20,6 +20,7 @@
         .btn-full { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--dark); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
         .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; }
         #verb-name { font-size: 1.8rem; font-weight: bold; color: var(--primary); text-transform: uppercase; }
+        #verb-traduction { font-size: 1.2rem; color: var(--dark); margin-top: 5px; display: block; font-weight: normal; }
         #pronoun { font-size: 1.4rem; font-weight: bold; margin: 10px 0; }
         input[type="text"], input[type="number"], textarea { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; text-align: center; outline: none; font-family: inherit; }
         .keyboard { display: flex; justify-content: center; gap: 5px; margin: 10px 0; flex-wrap: wrap; }
@@ -38,6 +39,7 @@
 <div class="app-container">
     <h1 id="main-title">Conju-Coach ✍️</h1>
 
+    <!-- ÉTAPE 0 : Choix Langue -->
     <div id="step-lang" class="step active">
         <p style="text-align:center">Choisissez votre langue / 언어를 선택하세요</p>
         <div class="btn-grid">
@@ -46,6 +48,7 @@
         </div>
     </div>
 
+    <!-- ÉTAPE 1 : Choix du Niveau -->
     <div id="step-level" class="step">
         <p id="label-level" style="text-align:center">Choisissez votre niveau DELF :</p>
         <div class="btn-grid">
@@ -57,12 +60,14 @@
         <button id="btn-custom-trigger" class="btn-choice" style="width:100%; margin-top:10px;" onclick="goToStep('step-custom')">⚙️ Personnalisé</button>
     </div>
 
+    <!-- ÉTAPE 2 : Personnalisation -->
     <div id="step-custom" class="step">
         <p id="label-tenses" style="text-align:center">Quels temps voulez-vous réviser ?</p>
         <div class="btn-grid" id="tense-buttons"></div>
         <button id="btn-custom-next" class="btn-full" onclick="confirmCustomTenses()">Suivant ➔</button>
     </div>
 
+    <!-- ÉTAPE 3 : Quantité -->
     <div id="step-quantity" class="step">
         <p id="label-quantity" style="text-align:center">Combien de verbes pour ce défi ?</p>
         <input type="number" id="nb-verbes" value="10" min="1" max="50">
@@ -72,11 +77,13 @@
         </div>
     </div>
 
+    <!-- ÉTAPE 4 : Jeu -->
     <div id="step-game" class="step">
         <div id="game-progress" style="text-align: right; font-weight: bold; color: var(--primary);">0 / 10</div>
         <div class="verb-card">
             <div id="verb-name">---</div>
-            <div id="tense-display" style="font-style:italic; color:#666;">-</div>
+            <span id="verb-traduction"></span>
+            <div id="tense-display" style="font-style:italic; color:#666; margin-top: 5px;">-</div>
             <div id="pronoun">---</div>
             <input type="text" id="answer-input" placeholder="Réponse..." autocomplete="off" spellcheck="false">
             <div class="keyboard">
@@ -92,6 +99,7 @@
         <div id="feedback" style="text-align:center; font-weight:bold; min-height:40px; margin-top:15px;"></div>
     </div>
 
+    <!-- ÉTAPE 5 : Résultats -->
     <div id="step-results" class="step">
         <div class="results-header">
             <div class="score-big" id="final-score">0 / 0</div>
@@ -182,15 +190,12 @@
         "B2": { "Présent": 5, "Passé composé": 20, "Imparfait": 10, "Futur simple": 10, "Impératif présent": 5, "Conditionnel présent": 10, "Plus-que-parfait": 10, "Subjonctif présent": 30 }
     };
 
-    // Fonction pour gérer l'élision (Je -> J')
     function getPronoun(pIdx, verbForm) {
         let p = pronoms[pIdx];
-        if (pIdx === 0) { // Uniquement pour "Je"
+        if (pIdx === 0) {
             const firstLetter = verbForm.normalize("NFD").replace(/[\u0300-\u036f]/g, "").charAt(0).toLowerCase();
             const vowels = ['a', 'e', 'i', 'o', 'u', 'y'];
-            if (vowels.includes(firstLetter)) {
-                return "J'";
-            }
+            if (vowels.includes(firstLetter)) return "J'";
             return "Je ";
         }
         return p + " ";
@@ -284,10 +289,15 @@
 
         do { currentPIdx = Math.floor(Math.random() * 6); } while (currentV.conjugaisons[currentTense][currentPIdx] === "");
 
+        // AFFICHAGE VERBE + TRADUCTION
         document.getElementById('verb-name').innerText = currentV.verbe;
+        if (currentV.traduction) {
+            document.getElementById('verb-traduction').innerText = `(${currentV.traduction})`;
+        } else {
+            document.getElementById('verb-traduction').innerText = "";
+        }
+
         document.getElementById('tense-display').innerText = (currentLang === 'ko') ? tenseMap[currentTense].ko : currentTense;
-        
-        // Elision dynamique ici
         const solutionExample = currentV.conjugaisons[currentTense][currentPIdx];
         document.getElementById('pronoun').innerText = getPronoun(currentPIdx, solutionExample) + "...";
         
@@ -336,7 +346,8 @@
         container.innerHTML = mistakeTracker.length > 0 ? `<h3>${i18n[currentLang].reviewTitle}</h3>` : `<h3>${i18n[currentLang].perfectMsg}</h3>`;
         mistakeTracker.forEach(m => {
             const displayTense = (currentLang === 'ko') ? tenseMap[m.tense].ko : m.tense;
-            let html = `<div class="review-block"><h3>${m.verb.verbe} - ${displayTense}</h3><table class="review-table">`;
+            const trad = m.verb.traduction ? ` (${m.verb.traduction})` : "";
+            let html = `<div class="review-block"><h3>${m.verb.verbe}${trad} - ${displayTense}</h3><table class="review-table">`;
             m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
                 if(conj === "") return;
                 html += `<tr ${idx === m.errorIdx ? "class='error-row'" : ""}><td>${getPronoun(idx, conj)}</td><td>${conj} ${idx === m.errorIdx ? i18n[currentLang].errorLabel : ''}</td></tr>`;
@@ -353,7 +364,8 @@
         if (mistakeTracker.length > 0) {
             corps += `ERREURS :\n`;
             mistakeTracker.forEach(m => {
-                corps += `\n- ${m.verb.verbe.toUpperCase()} (${m.tense})\n`;
+                const trad = m.verb.traduction ? ` [${m.verb.traduction}]` : "";
+                corps += `\n- ${m.verb.verbe.toUpperCase()}${trad} (${m.tense})\n`;
                 m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
                     if(conj === "") return;
                     corps += `${getPronoun(idx, conj)}: ${conj}${idx === m.errorIdx ? " <-- ERREUR" : ""}\n`;
