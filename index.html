@@ -159,24 +159,8 @@
 </div>
 
 <script>
-    // URL brute de ta base de données sur GitHub
-   const urlBDD = "verbes.json"; 
-
-fetch(urlBDD)
-    .then(res => {
-        if (!res.ok) throw new Error("Fichier verbes.json introuvable (Erreur 404)");
-        return res.json();
-    })
-    .then(data => {
-        fullDatabase = data;
-        initJeu();
-    })
-    .catch(err => {
-        console.error("Erreur détaillée :", err);
-        document.getElementById('verb-name').innerText = "Erreur 404";
-        document.getElementById('feedback').innerText = "Le fichier verbes.json est introuvable sur le serveur.";
-    });
-    
+    // Variables globales
+    const urlBDD = "verbes.json"; 
     let fullDatabase = [];
     let currentV = {};
     let currentTense = "";
@@ -184,14 +168,86 @@ fetch(urlBDD)
     let score = 0;
     let total = 0;
     let helpUrl = "";
-
     const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
 
-    // 1. Charger les données
+    // 1. Fonction pour initialiser une question
+    function initJeu() {
+        if (fullDatabase.length === 0) return;
+
+        const filter = document.getElementById('group-filter').value;
+        let filteredList = [];
+
+        if (filter === "all") {
+            filteredList = fullDatabase;
+        } else {
+            filteredList = fullDatabase.filter(v => v.groupe == filter);
+        }
+
+        if (filteredList.length === 0) {
+            document.getElementById('verb-name').innerText = "Aucun verbe trouvé";
+            return;
+        }
+
+        // Tirage au sort
+        currentV = filteredList[Math.floor(Math.random() * filteredList.length)];
+        const tempsDisponibles = Object.keys(currentV.conjugaisons);
+        currentTense = tempsDisponibles[Math.floor(Math.random() * tempsDisponibles.length)];
+        currentPIdx = Math.floor(Math.random() * 6);
+
+        // Affichage
+        document.getElementById('verb-name').innerText = currentV.verbe;
+        document.getElementById('tense-name').innerText = currentTense;
+        document.getElementById('pronoun').innerText = pronoms[currentPIdx] + " ...";
+        document.getElementById('answer-input').value = "";
+        document.getElementById('feedback').innerText = "";
+        
+        helpUrl = `https://leconjugueur.lefigaro.fr/php5/index.php?verbe=${currentV.verbe}`;
+        document.getElementById('conjugueur-link').href = helpUrl;
+        document.getElementById('answer-input').focus();
+    }
+
+    // 2. Fonction pour vérifier la réponse
+    function checkAnswer() {
+        const input = document.getElementById('answer-input').value.trim().toLowerCase();
+        const solution = currentV.conjugaisons[currentTense][currentPIdx].toLowerCase();
+        const feedback = document.getElementById('feedback');
+
+        total++;
+        if (input === solution) {
+            score++;
+            feedback.style.color = "var(--secondary)";
+            feedback.innerText = "✅ Bravo !";
+            setTimeout(initJeu, 1200);
+        } else {
+            feedback.style.color = "var(--error)";
+            feedback.innerHTML = `❌ Non : <b>${solution}</b>`;
+        }
+
+        document.getElementById('score').innerText = score;
+        document.getElementById('total').innerText = total;
+    }
+
+    // 3. Charger les données au démarrage
     fetch(urlBDD)
         .then(res => {
-            if (!res.ok) throw new Error("Impossible de joindre le fichier JSON");
+            if (!res.ok) throw new Error("Erreur 404 sur verbes.json");
             return res.json();
         })
         .then(data => {
             fullDatabase = data;
+            initJeu();
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('verb-name').innerText = "Erreur !";
+            document.getElementById('feedback').innerText = "Fichier verbes.json introuvable.";
+        });
+
+    // Écouter la touche Entrée
+    document.getElementById('answer-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
+</script>
+
+</body>
+</html>
