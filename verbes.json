@@ -1,6 +1,7 @@
 [
   {
     "verbe": "être",
+    "traduction": "이다, 있다",
     "niveau": "A1",
     "conjugaisons": {
       "Présent": ["suis", "es", "est", "sommes", "êtes", "sont"],
@@ -15,6 +16,7 @@
   },
   {
     "verbe": "avoir",
+    "traduction": "가지다, 있다",
     "niveau": "A1",
     "conjugaisons": {
       "Présent": ["ai", "as", "a", "avons", "avez", "ont"],
@@ -29,6 +31,7 @@
   },
   {
     "verbe": "aimer",
+    "traduction": "사랑하다, 좋아하다",
     "niveau": "A1",
     "conjugaisons": {
       "Présent": ["aime", "aimes", "aime", "aimons", "aimez", "aiment"],
@@ -42,7 +45,38 @@
     }
   },
   {
+    "verbe": "aller",
+    "traduction": "가다",
+    "niveau": "A1",
+    "conjugaisons": {
+      "Présent": ["vais", "vas", "va", "allons", "allez", "vont"],
+      "Imparfait": ["allais", "allais", "allait", "allions", "alliez", "allaient"],
+      "Passé composé": ["suis allé", "es allé", "est allé", "sommes allés", "êtes allés", "sont allés"],
+      "Plus-que-parfait": ["étais allé", "étais allé", "était allé", "étions allés", "étiez allés", "étaient allés"],
+      "Futur simple": ["irai", "iras", "ira", "irons", "irez", "iront"],
+      "Conditionnel présent": ["irais", "irais", "irait", "irions", "iriez", "iraient"],
+      "Subjonctif présent": ["aille", "ailles", "aille", "allions", "alliez", "aillent"],
+      "Impératif présent": ["va", "", "", "allons", "allez", ""]
+    }
+  },
+  {
+    "verbe": "faire",
+    "traduction": "하다, 만들다",
+    "niveau": "A1",
+    "conjugaisons": {
+      "Présent": ["fais", "fais", "fait", "faisons", "faites", "font"],
+      "Imparfait": ["faisais", "faisais", "faisait", "faisions", "faisiez", "faisaient"],
+      "Passé composé": ["ai fait", "as fait", "a fait", "avons fait", "avez fait", "ont fait"],
+      "Plus-que-parfait": ["avais fait", "avais fait", "avait fait", "avions fait", "aviez fait", "avaient fait"],
+      "Futur simple": ["ferai", "feras", "fera", "ferons", "ferez", "feront"],
+      "Conditionnel présent": ["ferais", "ferais", "ferait", "ferions", "feriez", "feraient"],
+      "Subjonctif présent": ["fasse", "fasses", "fasse", "fassions", "fassiez", "fassent"],
+      "Impératif présent": ["fais", "", "", "faisons", "faites", ""]
+    }
+  },
+  {
     "verbe": "finir",
+    "traduction": "끝내다",
     "niveau": "A1",
     "conjugaisons": {
       "Présent": ["finis", "finis", "finit", "finissons", "finissez", "finissent"],
@@ -56,75 +90,63 @@
     }
   },
   {
-    "verbe": "faire",
-    "niveau": "A1",
-    "conjugaisons": {
-      "Présent": ["fais", "fais", "fait", "faisons", "faites", "font"],
-      "Imparfait": ["faisais", "faisais", "faisait", "faisions", "faisiez", "faisaient"],
-      "Passé composé": ["ai fait", "as fait", "a fait", "avons fait", "avez fait", "ont fait"],
-      "Plus-que-parfait": ["avais fait", "avais fait", "avait fait", "avions fait", "aviez fait", "avaient fait"],
-      "Futur simple": ["ferai", "feras", "fera", "ferons", "ferez", "feront"],
-      "Conditionnel présent": ["ferais", "ferais", "ferait", "ferions", "feriez", "feraient"],
-      "Subjonctif présent": ["fasse", "fasses", "fasse", "fassions", "fassiez", "fassent"]
-    }
-  },
-  {
-    "verbe": "aller",
-    "niveau": "A1",
-    "conjugaisons": {
-      "Présent": ["vais", "vas", "va", "allons", "allez", "vont"],
-      "Imparfait": ["allais", "allais", "allait", "allions", "alliez", "allaient"],
-      "Passé composé": ["suis allé", "es allé", "est allé", "sommes allés", "êtes allés", "sont allés"],
-      "Futur simple": ["irai", "iras", "ira", "irons", "irez", "iront"],
-      "Conditionnel présent": ["irais", "irais", "irait", "irions", "iriez", "iraient"],
-      "Subjonctif présent": ["aille", "ailles", "aille", "allions", "alliez", "aillent"]
-    }
-  },
-  {
     "verbe": "pouvoir",
+    "traduction": "할 수 있다",
     "niveau": "A1",
     "conjugaisons": {
       "Présent": ["peux", "peux", "peut", "pouvons", "pouvez", "peuvent"],
       "Imparfait": ["pouvais", "pouvais", "pouvait", "pouvions", "pouviez", "pouvaient"],
+      "Passé composé": ["ai pu", "as pu", "a pu", "avons pu", "avez pu", "ont pu"],
+      "Plus-que-parfait": ["avais pu", "avais pu", "avait pu", "avions pu", "aviez pu", "avaient pu"],
       "Futur simple": ["pourrai", "pourras", "pourra", "pourrons", "pourrez", "pourront"],
       "Conditionnel présent": ["pourrais", "pourrais", "pourrait", "pourrions", "pourriez", "pourraient"],
-      "Subjonctif présent": ["puisse", "puisses", "puisse", "puissions", "puissiez", "puissent"]
+      "Subjonctif présent": ["puisse", "puisses", "puisse", "puissions", "puissiez", "puissent"],
+      "Impératif présent": ["", "", "", "", "", ""]
     }
   },
   {
-    "verbe": "manger",
+    "verbe": "vouloir",
+    "traduction": "원하다",
+    "niveau": "A1",
+    "conjugaisons": {
+      "Présent": ["veux", "veux", "veut", "voulons", "voulez", "veulent"],
+      "Imparfait": ["voulais", "voulais", "voulait", "voulions", "vouliez", "voulaient"],
+      "Passé composé": ["ai voulu", "as voulu", "a voulu", "avons voulu", "avez voulu", "ont voulu"],
+      "Plus-que-parfait": ["avais voulu", "avais voulu", "avait voulu", "avions voulu", "aviez voulu", "avaient voulu"],
+      "Futur simple": ["voudrai", "voudras", "voudra", "voudrons", "voudrez", "voudront"],
+      "Conditionnel présent": ["voudrais", "voudrais", "voudrait", "voudrions", "voudriez", "voudraient"],
+      "Subjonctif présent": ["veuille", "veuilles", "veuille", "voulions", "vouliez", "veuillent"],
+      "Impératif présent": ["veuille", "", "", "veuillons", "veuillez", ""]
+    }
+  },
+  {
+    "verbe": "prendre",
+    "traduction": "잡다, 타다, 먹다",
     "niveau": "A2",
     "conjugaisons": {
-      "Présent": ["mange", "manges", "mange", "mangeons", "mangez", "mangent"],
-      "Imparfait": ["mangeais", "mangeais", "mangeait", "mangeions", "mangeiez", "mangeaient"],
-      "Passé composé": ["ai mangé", "as mangé", "a mangé", "avons mangé", "avez mangé", "ont mangé"],
-      "Futur simple": ["mangerai", "mangeras", "mangera", "mangerons", "mangerez", "mangeront"],
-      "Conditionnel présent": ["mangerais", "mangerais", "mangerait", "mangerions", "mangeriez", "mangeraient"],
-      "Subjonctif présent": ["mange", "manges", "mange", "mangiions", "mangiiez", "mangent"]
+      "Présent": ["prends", "prends", "prend", "prenons", "prenez", "prennent"],
+      "Imparfait": ["prenais", "prenais", "prenait", "prenions", "preniez", "prenaient"],
+      "Passé composé": ["ai pris", "as pris", "a pris", "avons pris", "avez pris", "ont pris"],
+      "Plus-que-parfait": ["avais pris", "avais pris", "avait pris", "avions pris", "aviez pris", "avaient pris"],
+      "Futur simple": ["prendrai", "prendras", "prendra", "prendrons", "prendrez", "prendront"],
+      "Conditionnel présent": ["prendrais", "prendrais", "prendrait", "prendrions", "prendriez", "prendraient"],
+      "Subjonctif présent": ["prenne", "prennes", "prenne", "prenions", "preniez", "prennent"],
+      "Impératif présent": ["prends", "", "", "prenons", "prenez", ""]
     }
   },
   {
     "verbe": "venir",
+    "traduction": "오다",
     "niveau": "A2",
     "conjugaisons": {
       "Présent": ["viens", "viens", "vient", "venons", "venez", "viennent"],
       "Imparfait": ["venais", "venais", "venait", "venions", "veniez", "venaient"],
       "Passé composé": ["suis venu", "es venu", "est venu", "sommes venus", "êtes venus", "sont venus"],
+      "Plus-que-parfait": ["étais venu", "étais venu", "était venu", "étions venus", "étiez venus", "étaient venus"],
       "Futur simple": ["viendrai", "viendras", "viendra", "viendrons", "viendrez", "viendront"],
-      "Subjonctif présent": ["vienne", "viennes", "vienne", "venions", "veniez", "viennent"]
-    }
-  },
-  {
-    "verbe": "savoir",
-    "niveau": "B1",
-    "conjugaisons": {
-      "Présent": ["sais", "sais", "sait", "savons", "savez", "savent"],
-      "Imparfait": ["savais", "savais", "savait", "savions", "saviez", "savaient"],
-      "Plus-que-parfait": ["avais su", "avais su", "avait su", "avions su", "aviez su", "avaient su"],
-      "Futur simple": ["saurai", "sauras", "saura", "saurons", "saurez", "sauront"],
-      "Conditionnel présent": ["saurais", "saurais", "saurait", "saurions", "sauriez", "sauraient"],
-      "Subjonctif présent": ["sache", "saches", "sache", "sachions", "sachiez", "sachent"],
-      "Impératif présent": ["sache", "", "", "sachons", "sachez", ""]
+      "Conditionnel présent": ["viendrais", "viendrais", "viendrait", "viendrions", "viendriez", "viendraient"],
+      "Subjonctif présent": ["vienne", "viennes", "vienne", "venions", "veniez", "viennent"],
+      "Impératif présent": ["viens", "", "", "venons", "venez", ""]
     }
   }
 ]
