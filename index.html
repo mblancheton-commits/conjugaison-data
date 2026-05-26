@@ -9,15 +9,25 @@
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .app-container { background: white; width: 95%; max-width: 450px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .stats-bar { display: flex; justify-content: space-around; background: #f8f9fa; padding: 10px; border-radius: 10px; margin-bottom: 20px; }
-        .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 20px; }
-        #verb-name { font-size: 1.8rem; font-weight: bold; color: var(--primary); text-transform: uppercase; }
-        #pronoun { font-size: 1.4rem; font-weight: bold; margin: 15px 0; }
+        .header { text-align: center; margin-bottom: 15px; }
+        .stats-bar { display: flex; justify-content: space-around; background: #f8f9fa; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: bold; }
+        .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; margin-bottom: 15px; }
+        #verb-name { font-size: 1.6rem; font-weight: bold; color: var(--primary); text-transform: uppercase; margin-bottom: 5px; }
+        #pronoun { font-size: 1.4rem; font-weight: bold; margin: 10px 0; color: var(--dark); }
+        
         input { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.2rem; text-align: center; outline: none; }
-        .btn-check { width: 100%; padding: 15px; border: none; border-radius: 10px; background: var(--secondary); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .feedback { margin-top: 20px; text-align: center; font-weight: bold; min-height: 40px; }
-        select { width: 100%; padding: 10px; border-radius: 8px; margin-top: 5px; }
+        input:disabled { background: #f9f9f9; color: #333; }
+
+        /* Clavier d'accents */
+        .keyboard { display: flex; justify-content: center; gap: 8px; margin-top: 15px; }
+        .key { background: #fff; border: 1px solid #ddd; border-radius: 5px; padding: 10px; min-width: 40px; cursor: pointer; font-weight: bold; font-size: 1.1rem; box-shadow: 0 2px 0 #ccc; transition: 0.1s; }
+        .key:active { transform: translateY(2px); box-shadow: none; }
+
+        .btn-check { width: 100%; padding: 15px; border: none; border-radius: 10px; background: var(--secondary); color: white; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 1.1rem; }
+        .btn-check:disabled { background: #ccc; cursor: not-allowed; }
+
+        .feedback { margin-top: 20px; text-align: center; font-weight: bold; min-height: 45px; font-size: 1.1rem; line-height: 1.4; }
+        select { width: 100%; padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #ccc; background: white; }
     </style>
 </head>
 <body>
@@ -26,44 +36,61 @@
     <div class="header">
         <h1>Conju-Coach ✍️</h1>
         <div class="stats-bar">
-            <span>Score: <b id="score">0</b></span>
+            <span>Score: <b id="score" style="color:var(--secondary)">0</b></span>
             <span>Total: <b id="total">0</b></span>
         </div>
     </div>
 
-    <div style="margin-bottom:20px; text-align:center;">
-        <label>Groupe :</label>
+    <div style="margin-bottom:15px; text-align:center; font-size: 0.9rem;">
+        <label>Filtrer par groupe :</label>
         <select id="group-filter" onchange="initJeu()">
-            <option value="all">Tous</option>
-            <option value="1">1er groupe</option>
-            <option value="2">2ème groupe</option>
-            <option value="3">3ème groupe</option>
+            <option value="all">Tous les verbes</option>
+            <option value="1">1er groupe (-er)</option>
+            <option value="2">2ème groupe (-ir)</option>
+            <option value="3">3ème groupe (irréguliers)</option>
         </select>
     </div>
 
     <div class="verb-card">
         <div id="verb-name">Chargement...</div>
-        <div id="tense-name" style="font-style:italic; color:#666;">-</div>
+        <div id="tense-name" style="font-style:italic; color:#666; font-size: 0.9rem;">-</div>
         <div id="pronoun">---</div>
-        <input type="text" id="answer-input" placeholder="Réponse..." autocomplete="off">
+        <input type="text" id="answer-input" placeholder="Tapez la réponse..." autocomplete="off" spellcheck="false">
+        
+        <!-- Boutons d'accents -->
+        <div class="keyboard">
+            <button class="key" onclick="insertChar('é')">é</button>
+            <button class="key" onclick="insertChar('è')">è</button>
+            <button class="key" onclick="insertChar('à')">à</button>
+            <button class="key" onclick="insertChar('ç')">ç</button>
+            <button class="key" onclick="insertChar('ê')">ê</button>
+            <button class="key" onclick="insertChar('î')">î</button>
+        </div>
     </div>
 
-    <button class="btn-check" onclick="checkAnswer()">Vérifier</button>
+    <button id="btn-submit" class="btn-check" onclick="checkAnswer()">Vérifier</button>
     <div id="feedback" class="feedback"></div>
 </div>
 
 <script>
-    // Configuration
     const urlBDD = "verbes.json"; 
     let fullDatabase = [];
-    let currentV = {};
-    let currentTense = "";
-    let currentPIdx = 0;
-    let score = 0;
-    let total = 0;
+    let currentV, currentTense, currentPIdx;
+    let score = 0, total = 0;
     const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
 
-    // Définition des fonctions sur l'objet window pour être sûr qu'elles soient globales
+    // Insertion d'accent
+    window.insertChar = function(char) {
+        const input = document.getElementById('answer-input');
+        if (input.disabled) return;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+        input.value = text.slice(0, start) + char + text.slice(end);
+        input.focus();
+        input.setSelectionRange(start + 1, start + 1);
+    };
+
     window.initJeu = function() {
         const filter = document.getElementById('group-filter').value;
         let filteredList = (filter === "all") ? fullDatabase : fullDatabase.filter(v => v.groupe == filter);
@@ -72,6 +99,10 @@
             document.getElementById('verb-name').innerText = "Aucun verbe";
             return;
         }
+
+        // Réactivation des champs
+        document.getElementById('answer-input').disabled = false;
+        document.getElementById('btn-submit').disabled = false;
 
         currentV = filteredList[Math.floor(Math.random() * filteredList.length)];
         const tenses = Object.keys(currentV.conjugaisons);
@@ -87,43 +118,45 @@
     };
 
     window.checkAnswer = function() {
-        const input = document.getElementById('answer-input').value.trim().toLowerCase();
+        const inputField = document.getElementById('answer-input');
+        const submitBtn = document.getElementById('btn-submit');
+        const input = inputField.value.trim().toLowerCase();
         const solution = currentV.conjugaisons[currentTense][currentPIdx].toLowerCase();
         const feedback = document.getElementById('feedback');
+
+        // On bloque les entrées pendant la correction
+        inputField.disabled = true;
+        submitBtn.disabled = true;
 
         total++;
         if (input === solution) {
             score++;
             feedback.style.color = "var(--secondary)";
-            feedback.innerText = "✅ Bravo !";
-            setTimeout(window.initJeu, 1000);
+            feedback.innerText = "✨ Bravo ! Correct.";
+            setTimeout(window.initJeu, 1000); // Passe après 1 seconde
         } else {
             feedback.style.color = "var(--error)";
-            feedback.innerHTML = `❌ Non : <b>${solution}</b>`;
+            feedback.innerHTML = `❌ Erreur.<br>C'était : <span style="font-size:1.3rem">${solution}</span>`;
+            setTimeout(window.initJeu, 2500); // Laisse 2.5s pour lire la correction
         }
+        
         document.getElementById('score').innerText = score;
         document.getElementById('total').innerText = total;
     };
 
-    // Chargement initial
     fetch(urlBDD)
-        .then(res => {
-            if (!res.ok) throw new Error("Fichier verbes.json non trouvé");
-            return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
             fullDatabase = data;
             window.initJeu();
         })
         .catch(err => {
-            document.getElementById('verb-name').innerText = "Erreur BDD";
-            document.getElementById('feedback').innerText = "Vérifiez que verbes.json est bien présent.";
-            console.error(err);
+            document.getElementById('verb-name').innerText = "Erreur !";
+            document.getElementById('feedback').innerText = "Le fichier verbes.json est introuvable.";
         });
 
-    // Touche Entrée
     document.getElementById('answer-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') window.checkAnswer();
+        if (e.key === 'Enter' && !document.getElementById('answer-input').disabled) window.checkAnswer();
     });
 </script>
 
