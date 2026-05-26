@@ -227,4 +227,234 @@
         document.getElementById('btn-infinite').innerText = text.infinite;
         document.getElementById('btn-start').innerText = text.startBtn;
         document.getElementById('btn-submit').innerText = text.checkBtn;
-        document.getElementById(
+        document.getElementById('btn-stop-infinite').innerText = text.stopBtn;
+        document.getElementById('user-comment').placeholder = text.commentPlaceholder;
+        document.getElementById('btn-email').innerText = text.emailBtn;
+        document.getElementById('btn-restart').innerText = text.restartBtn;
+        window.goToStep('step-level');
+    };
+
+    window.goToStep = function(id) {
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'step-custom') window.renderTenseButtons();
+        if(id === 'step-conj') { 
+            document.getElementById('search-input').value = ""; 
+            document.getElementById('conj-results').innerHTML = ""; 
+        }
+    };
+
+    window.renderTenseButtons = function() {
+        const container = document.getElementById('tense-buttons');
+        container.innerHTML = "";
+        Object.keys(tenseMap).forEach(t => {
+            const btn = document.createElement('button');
+            btn.className = "btn-choice";
+            btn.innerText = (currentLang === 'ko') ? tenseMap[t].ko : t;
+            btn.onclick = () => {
+                btn.classList.toggle('selected');
+                if(selectedTenses.includes(t)) selectedTenses = selectedTenses.filter(x => x !== t);
+                else selectedTenses.push(t);
+            };
+            container.appendChild(btn);
+        });
+    };
+
+    window.updateSuggestions = function() {
+        const input = document.getElementById('search-input').value.toLowerCase().trim();
+        const suggBox = document.getElementById('suggestions');
+        suggBox.innerHTML = "";
+        if (input.length < 1) { suggBox.style.display = "none"; return; }
+        const matches = fullDatabase.filter(v => v.verbe.toLowerCase().startsWith(input)).slice(0, 5);
+        if (matches.length > 0) {
+            matches.forEach(v => {
+                const div = document.createElement('div');
+                div.className = "suggestion-item";
+                div.innerText = `${v.verbe} (${v.traduction || ''})`;
+                div.onclick = () => window.displayVerbTables(v);
+                suggBox.appendChild(div);
+            });
+            suggBox.style.display = "block";
+        } else {
+            suggBox.style.display = "none";
+        }
+    };
+
+    window.displayVerbTables = function(verb) {
+        document.getElementById('suggestions').style.display = "none";
+        document.getElementById('search-input').value = verb.verbe;
+        const container = document.getElementById('conj-results');
+        container.innerHTML = `<h2>${verb.verbe.toUpperCase()}</h2><p>(${verb.traduction || ''})</p>`;
+        Object.keys(verb.conjugaisons).forEach(t => {
+            const displayTense = (currentLang === 'ko') ? tenseMap[t].ko : t;
+            let html = `<div class="review-block"><h3>${displayTense}</h3><table class="review-table">`;
+            verb.conjugaisons[t].forEach((conj, idx) => {
+                if (conj === "") return;
+                html += `<tr><td>${window.getPronoun(idx, conj)}</td><td><b>${conj}</b></td></tr>`;
+            });
+            container.innerHTML += html + `</table></div>`;
+        });
+    };
+
+    window.getPronoun = function(pIdx, verbForm) {
+        if (pIdx === 0) {
+            const firstLetter = verbForm.normalize("NFD").replace(/[\u0300-\u036f]/g, "").charAt(0).toLowerCase();
+            const vowels = ['a', 'e', 'i', 'o', 'u', 'y'];
+            return vowels.includes(firstLetter) ? "J'" : "Je ";
+        }
+        return pronoms[pIdx] + " ";
+    };
+
+    window.selectLevel = function(lvl) {
+        selectedLevel = lvl;
+        selectedTenses = Object.keys(tenseWeights[lvl]);
+        window.goToStep('step-quantity');
+    };
+
+    window.confirmCustomTenses = function() {
+        if(selectedTenses.length === 0) return alert(currentLang === 'ko' ? "시제를 선택해 주세요!" : "Choisissez au moins un temps !");
+        selectedLevel = "CUSTOM";
+        window.goToStep('step-quantity');
+    };
+
+    window.startChallenge = function(nb) {
+        targetNb = nb || parseInt(document.getElementById('nb-verbes').value);
+        score = 0; total = 0; mistakeTracker = [];
+        document.getElementById('btn-stop-infinite').style.display = (targetNb === 999) ? 'block' : 'none';
+        window.goToStep('step-game');
+        window.initJeu();
+    };
+
+    window.initJeu = function() {
+        if (total >= targetNb) return window.showResults();
+        document.getElementById('game-progress').innerText = (targetNb === 999) ? `Verbe ${total + 1} (∞)` : `${total + 1} / ${targetNb}`;
+        let valid = false;
+        let attempts = 0;
+        while(!valid && attempts < 500) {
+            attempts++;
+            let targetTense = window.pickWeightedTense(selectedTenses);
+            const maxLvlIdx = levelsOrder.indexOf(selectedLevel === "CUSTOM" ? "B2" : selectedLevel);
+            let pool = fullDatabase.filter(v => levelsOrder.indexOf(v.niveau) <= maxLvlIdx);
+            if (selectedLevel === "A1") {
+                const isIrregTarget = Math.random() < 0.5;
+                let subPool = pool.filter(v => isIrregTarget ? a1Irregulars.includes(v.verbe) : !a1Irregulars.includes(v.verbe));
+                if (subPool.length > 0) pool = subPool;
+            }
+            let finalPool = pool.filter(v => v.conjugaisons[targetTense]);
+            if (selectedLevel === "A2" && targetTense === "Conditionnel présent") {
+                finalPool = finalPool.filter(v => ["vouloir", "aimer", "pouvoir", "devoir"].includes(v.verbe));
+            }
+            if (finalPool.length > 0) {
+                currentV = finalPool[Math.floor(Math.random() * finalPool.length)];
+                currentTense = targetTense;
+                valid = true;
+            }
+        }
+        do { currentPIdx = Math.floor(Math.random() * 6); } while (currentV.conjugaisons[currentTense][currentPIdx] === "");
+        document.getElementById('verb-name').innerText = currentV.verbe;
+        document.getElementById('verb-traduction').innerText = currentV.traduction ? `(${currentV.traduction})` : "";
+        document.getElementById('tense-display').innerText = (currentLang === 'ko') ? tenseMap[currentTense].ko : currentTense;
+        document.getElementById('pronoun').innerText = window.getPronoun(currentPIdx, currentV.conjugaisons[currentTense][currentPIdx]) + "...";
+        const input = document.getElementById('answer-input');
+        input.value = ""; input.disabled = false;
+        document.getElementById('feedback').innerText = "";
+        input.focus();
+    };
+
+    window.pickWeightedTense = function(availableTenses) {
+        if (selectedLevel === "CUSTOM") return availableTenses[Math.floor(Math.random() * availableTenses.length)];
+        let weights = tenseWeights[selectedLevel];
+        let pool = [];
+        availableTenses.forEach(t => {
+            let w = weights[t] || 0;
+            for (let i = 0; i < w; i++) pool.push(t);
+        });
+        return pool[Math.floor(Math.random() * pool.length)];
+    };
+
+    window.checkAnswer = function() {
+        const inputField = document.getElementById('answer-input');
+        if (inputField.disabled || !currentV) return;
+        const solution = currentV.conjugaisons[currentTense][currentPIdx].toLowerCase();
+        const input = inputField.value.trim().toLowerCase();
+        inputField.disabled = true;
+        total++;
+        if (input === solution) {
+            score++;
+            document.getElementById('feedback').innerHTML = `<span style='color:var(--secondary)'>${i18n[currentLang].successMsg}</span>`;
+            setTimeout(window.initJeu, 1000);
+        } else {
+            document.getElementById('feedback').innerHTML = `<span style='color:var(--error)'>${i18n[currentLang].errorMsg} <b>${solution}</b></span>`;
+            const alreadyNoted = mistakeTracker.some(m => m.verb.verbe === currentV.verbe && m.tense === currentTense);
+            if (!alreadyNoted) mistakeTracker.push({verb: currentV, tense: currentTense, errorIdx: currentPIdx});
+            setTimeout(window.initJeu, 2500);
+        }
+    };
+
+    window.showResults = function() {
+        window.goToStep('step-results');
+        document.getElementById('final-score').innerText = `${score} / ${total}`;
+        document.getElementById('final-percent').innerText = `${Math.round((score/total)*100)}% ${i18n[currentLang].statsLabel}`;
+        const container = document.getElementById('mistake-container');
+        container.innerHTML = mistakeTracker.length > 0 ? `<h3>${i18n[currentLang].reviewTitle}</h3>` : `<h3>${i18n[currentLang].perfectMsg}</h3>`;
+        mistakeTracker.forEach(m => {
+            const displayTense = (currentLang === 'ko') ? tenseMap[m.tense].ko : m.tense;
+            const trad = m.verb.traduction ? ` (${m.verb.traduction})` : "";
+            let html = `<div class="review-block"><h3>${m.verb.verbe}${trad} - ${displayTense}</h3><table class="review-table">`;
+            m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
+                if(conj === "") return;
+                html += `<tr ${idx === m.errorIdx ? "class='error-row'" : ""}><td>${window.getPronoun(idx, conj)}</td><td>${conj} ${idx === m.errorIdx ? i18n[currentLang].errorLabel : ''}</td></tr>`;
+            });
+            container.innerHTML += html + "</table></div>";
+        });
+    };
+
+    window.sendEmail = function() {
+        const emailProf = "m.blancheton@gmail.com";
+        const sujet = `Regarde comme je suis trop forte ! (${selectedLevel})`;
+        const commentaire = document.getElementById('user-comment').value || "Aucun commentaire.";
+        let corps = `Score : ${score} / ${total} (${Math.round((score/total)*100)}%)\nCommentaire : ${commentaire}\n\n`;
+        if (mistakeTracker.length > 0) {
+            corps += `ERREURS :\n`;
+            mistakeTracker.forEach(m => {
+                const trad = m.verb.traduction ? ` [${m.verb.traduction}]` : "";
+                corps += `\n- ${m.verb.verbe.toUpperCase()}${trad} (${m.tense})\n`;
+                m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
+                    if(conj === "") return;
+                    corps += `${window.getPronoun(idx, conj)}: ${conj}${idx === m.errorIdx ? " <-- ERREUR" : ""}\n`;
+                });
+            });
+        }
+        window.location.href = `mailto:${emailProf}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+    };
+
+    window.insertChar = function(char) {
+        const input = document.getElementById('answer-input');
+        if (input.disabled) return;
+        const start = input.selectionStart;
+        input.value = input.value.slice(0, start) + char + input.value.slice(input.selectionEnd);
+        input.focus();
+    };
+
+    // --- 3. INITIALISATION ---
+    document.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const active = document.querySelector('.step.active');
+            if(active && active.id === 'step-game') window.checkAnswer();
+        }
+    });
+
+    fetch('verbes.json')
+        .then(res => res.json())
+        .then(data => { 
+            fullDatabase = data; 
+            console.log("BDD chargée : " + data.length + " verbes.");
+        })
+        .catch(err => {
+            console.error("Erreur JSON:", err);
+            alert("Erreur de chargement de la base de données.");
+        });
+</script>
+
+</body>
+</html>
