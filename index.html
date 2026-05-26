@@ -160,7 +160,22 @@
 
 <script>
     // URL brute de ta base de données sur GitHub
-    const urlBDD = "https://raw.githubusercontent.com/mblancheton-commits/conjugaison-data/main/verbes.json";
+   const urlBDD = "verbes.json"; 
+
+fetch(urlBDD)
+    .then(res => {
+        if (!res.ok) throw new Error("Fichier verbes.json introuvable (Erreur 404)");
+        return res.json();
+    })
+    .then(data => {
+        fullDatabase = data;
+        initJeu();
+    })
+    .catch(err => {
+        console.error("Erreur détaillée :", err);
+        document.getElementById('verb-name').innerText = "Erreur 404";
+        document.getElementById('feedback').innerText = "Le fichier verbes.json est introuvable sur le serveur.";
+    });
     
     let fullDatabase = [];
     let currentV = {};
