@@ -44,6 +44,7 @@
             <label><input type="checkbox" class="tense-opt" value="Futur simple"> Futur simple</label>
             <label><input type="checkbox" class="tense-opt" value="Conditionnel présent"> Conditionnel</label>
             <label><input type="checkbox" class="tense-opt" value="Subjonctif présent"> Subjonctif</label>
+            <label><input type="checkbox" class="tense-opt" value="Plus-que-parfait"> Plus-que-parfait</label>
             <label><input type="checkbox" class="tense-opt" value="Impératif présent"> Impératif</label>
         </div>
         <button onclick="window.initJeu()" style="margin-top:15px; width:100%; padding:10px; cursor:pointer; border-radius:8px; border:1px solid #ccc; background:#eee; font-weight:bold;">Appliquer / Nouveau Verbe</button>
@@ -75,20 +76,15 @@
 </div>
 
 <script>
-    // Diagnostic immédiat
-    console.log("Script chargé et en cours d'exécution...");
-
-    // Variables globales
     let fullDatabase = [];
     let currentV, currentTense, currentPIdx;
     let score = 0, total = 0;
     const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
+    const levelsOrder = ["A1", "A2", "B1", "B2"];
 
-    // Attachement forcé des fonctions à l'objet global Window
     window.toggleCustomTenses = function() {
         const select = document.getElementById('level-select');
-        const box = document.getElementById('custom-box');
-        if(box) box.style.display = (select.value === "CUSTOM") ? "grid" : "none";
+        document.getElementById('custom-box').style.display = (select.value === "CUSTOM") ? "grid" : "none";
     };
 
     window.insertChar = function(char) {
@@ -100,55 +96,61 @@
     };
 
     window.initJeu = function() {
-        console.log("Initialisation d'un nouveau verbe...");
-        if (fullDatabase.length === 0) {
-            console.error("La base de données est vide !");
-            return;
+        if (fullDatabase.length === 0) return;
+
+        const selectedLevel = document.getElementById('level-select').value;
+        let allowedTenses = [];
+        
+        // 1. Définir les temps autorisés par niveau
+        if (selectedLevel === "A1") allowedTenses = ["Présent"];
+        else if (selectedLevel === "A2") allowedTenses = ["Présent", "Imparfait", "Passé composé", "Futur simple", "Conditionnel présent", "Impératif présent"];
+        else if (selectedLevel === "B1") allowedTenses = ["Présent", "Imparfait", "Passé composé", "Plus-que-parfait", "Futur simple", "Conditionnel présent", "Subjonctif présent"];
+        else if (selectedLevel === "B2") allowedTenses = ["Présent", "Imparfait", "Passé composé", "Plus-que-parfait", "Futur simple", "Conditionnel présent", "Subjonctif présent"];
+        else if (selectedLevel === "CUSTOM") allowedTenses = Array.from(document.querySelectorAll('.tense-opt:checked')).map(cb => cb.value);
+
+        // 2. Filtrer les verbes (CUMULATIF : B1 inclut les verbes A1 et A2)
+        let filteredVerbs;
+        if (selectedLevel === "CUSTOM") {
+            filteredVerbs = fullDatabase;
+        } else {
+            const maxIdx = levelsOrder.indexOf(selectedLevel);
+            filteredVerbs = fullDatabase.filter(v => levelsOrder.indexOf(v.niveau) <= maxIdx);
         }
 
-        const level = document.getElementById('level-select').value;
-        let tenses = [];
-        let verbFilter = (v) => true;
-
-        if (level === "A1") {
-            tenses = ["Présent"];
-            const a1Irregulars = ["être", "avoir", "faire", "aller", "prendre", "vouloir", "pouvoir"];
-            verbFilter = (v) => v.niveau === "A1" || a1Irregulars.includes(v.verbe);
-        } else if (level === "A2") {
-            tenses = ["Présent", "Imparfait", "Passé composé", "Futur simple", "Conditionnel présent", "Impératif présent"];
-        } else if (level === "B1" || level === "B2") {
-            tenses = ["Présent", "Imparfait", "Passé composé", "Plus-que-parfait", "Futur simple", "Conditionnel présent", "Subjonctif présent"];
-        } else if (level === "CUSTOM") {
-            tenses = Array.from(document.querySelectorAll('.tense-opt:checked')).map(cb => cb.value);
-        }
-
-        let filteredVerbs = fullDatabase.filter(verbFilter);
-        if (filteredVerbs.length === 0 || tenses.length === 0) {
-            document.getElementById('verb-name').innerText = "Sélection incomplète";
-            return;
-        }
-
+        // 3. Tirage au sort
         let valid = false;
         let attempts = 0;
-        while(!valid && attempts < 100) {
+        while(!valid && attempts < 200) {
             attempts++;
             let tempV = filteredVerbs[Math.floor(Math.random() * filteredVerbs.length)];
-            let availableInVerb = Object.keys(tempV.conjugaisons).filter(t => tenses.includes(t));
+            // On ne garde que les temps du verbe qui sont autorisés pour le niveau choisi
+            let possibleTenses = Object.keys(tempV.conjugaisons).filter(t => allowedTenses.includes(t));
             
-            if (availableInVerb.length > 0) {
-                let tempTense = availableInVerb[Math.floor(Math.random() * availableInVerb.length)];
-                if (level === "A2" && tempTense === "Conditionnel présent") {
-                    const a2CondVerbs = ["vouloir", "aimer", "pouvoir", "devoir"];
-                    if (!a2CondVerbs.includes(tempV.verbe)) continue;
+            if (possibleTenses.length > 0) {
+                let tempTense = possibleTenses[Math.floor(Math.random() * possibleTenses.length)];
+                
+                // Restriction A2 Conditionnel
+                if (selectedLevel === "A2" && tempTense === "Conditionnel présent") {
+                    if (!["vouloir", "aimer", "pouvoir", "devoir"].includes(tempV.verbe)) continue;
                 }
+
                 currentV = tempV;
                 currentTense = tempTense;
                 valid = true;
             }
         }
 
-        currentPIdx = Math.floor(Math.random() * 6);
-        if (currentV.conjugaisons[currentTense][currentPIdx] === "") { window.initJeu(); return; }
+        if (!valid) {
+            document.getElementById('verb-name').innerText = "Aucun verbe trouvé";
+            return;
+        }
+
+        // Tirage personne (en évitant les cases vides pour l'impératif)
+        let pAttempts = 0;
+        do {
+            currentPIdx = Math.floor(Math.random() * 6);
+            pAttempts++;
+        } while (currentV.conjugaisons[currentTense][currentPIdx] === "" && pAttempts < 10);
 
         document.getElementById('answer-input').disabled = false;
         document.getElementById('verb-name').innerText = currentV.verbe;
@@ -161,38 +163,27 @@
 
     window.checkAnswer = function() {
         const inputField = document.getElementById('answer-input');
-        if (inputField.disabled || !currentV) return;
-
+        if (inputField.disabled) return;
         const solution = currentV.conjugaisons[currentTense][currentPIdx].toLowerCase();
         const input = inputField.value.trim().toLowerCase();
-        
         inputField.disabled = true;
         total++;
-
-        const feedback = document.getElementById('feedback');
         if (input === solution) {
             score++;
-            feedback.innerHTML = "<span style='color:var(--secondary)'>✨ Bravo ! Correct.</span>";
+            document.getElementById('feedback').innerHTML = "<span style='color:var(--secondary)'>✨ Bravo !</span>";
             setTimeout(window.initJeu, 1000);
         } else {
-            feedback.innerHTML = `<span style='color:var(--error)'>❌ Non. C'était : <b>${solution}</b></span>`;
+            document.getElementById('feedback').innerHTML = `<span style='color:var(--error)'>❌ C'était : <b>${solution}</b></span>`;
             setTimeout(window.initJeu, 2500);
         }
         document.getElementById('score').innerText = score;
         document.getElementById('total').innerText = total;
     };
 
-    // Lancement automatique au chargement
-    fetch('verbes.json')
-        .then(res => res.json())
-        .then(data => {
-            fullDatabase = data;
-            window.initJeu();
-        })
-        .catch(err => {
-            console.error("Erreur chargement JSON:", err);
-            document.getElementById('verb-name').innerText = "Erreur BDD";
-        });
+    fetch('verbes.json').then(res => res.json()).then(data => {
+        fullDatabase = data;
+        window.initJeu();
+    });
 
     document.getElementById('answer-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') window.checkAnswer();
