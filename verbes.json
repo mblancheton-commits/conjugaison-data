@@ -1,0 +1,182 @@
+[
+  {
+    "verbe": "aimer",
+    "groupe": 1,
+    "conjugaisons": {
+      "Présent": ["aime", "aimes", "aime", "aimons", "aimez", "aiment"],
+      "Imparfait": ["aimais", "aimais", "aimait", "aimions", "aimiez", "aimaient"],
+      "Futur": ["aimerai", "aimeras", "aimera", "aimerons", "aimerez", "aimeront"]
+    }
+  },
+  {
+    "verbe": "manger",
+    "groupe": 1,
+    "conjugaisons": {
+      "Présent": ["mange", "manges", "mange", "mangeons", "mangez", "mangent"],
+      "Imparfait": ["mangeais", "mangeais", "mangeait", "mangeions", "mangeiez", "mangeaient"],
+      "Futur": ["mangerai", "mangeras", "mangera", "mangerons", "mangerez", "mangeront"]
+    }
+  },
+  {
+    "verbe": "parler",
+    "groupe": 1,
+    "conjugaisons": {
+      "Présent": ["parle", "parles", "parle", "parlons", "parlez", "parlent"],
+      "Imparfait": ["parlais", "parlais", "parlait", "parlions", "parliez", "parlaient"],
+      "Futur": ["parlerai", "parleras", "parlera", "parlerons", "parlerez", "parleront"]
+    }
+  },
+  {
+    "verbe": "commencer",
+    "groupe": 1,
+    "conjugaisons": {
+      "Présent": ["commence", "commences", "commence", "commençons", "commencez", "commencent"],
+      "Imparfait": ["commençais", "commençais", "commençait", "commencions", "commenciez", "commençaient"],
+      "Futur": ["commencerai", "commenceras", "commencera", "commencerons", "commencerez", "commenceront"]
+    }
+  },
+  {
+    "verbe": "finir",
+    "groupe": 2,
+    "conjugaisons": {
+      "Présent": ["finis", "finis", "finit", "finissons", "finissez", "finissent"],
+      "Imparfait": ["finissais", "finissais", "finissait", "finissions", "finissiez", "finissaient"],
+      "Futur": ["finirai", "finiras", "finira", "finirons", "finirez", "finiront"]
+    }
+  },
+  {
+    "verbe": "choisir",
+    "groupe": 2,
+    "conjugaisons": {
+      "Présent": ["choisis", "choisis", "choisit", "choisissons", "choisissez", "choisissent"],
+      "Imparfait": ["choisissais", "choisissais", "choisissait", "choisissions", "choisissiez", "choisissaient"],
+      "Futur": ["choisirai", "choisiras", "choisira", "choisirons", "choisirez", "choisiront"]
+    }
+  },
+  {
+    "verbe": "réussir",
+    "groupe": 2,
+    "conjugaisons": {
+      "Présent": ["réussis", "réussis", "réussit", "réussissons", "réussissez", "réussissent"],
+      "Imparfait": ["réussissais", "réussissais", "réussissait", "réussissions", "réussissiez", "réussissaient"],
+      "Futur": ["réussirai", "réussiras", "réussira", "réussirons", "réussirez", "réussiront"]
+    }
+  },
+  {
+    "verbe": "être",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["suis", "es", "est", "sommes", "êtes", "sont"],
+      "Imparfait": ["étais", "étais", "était", "étions", "étiez", "étaient"],
+      "Futur": ["serai", "seras", "sera", "serons", "serez", "seront"]
+    }
+  },
+  {
+    "verbe": "avoir",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["ai", "as", "a", "avons", "avez", "ont"],
+      "Imparfait": ["avais", "avais", "avait", "avions", "aviez", "avaient"],
+      "Futur": ["aurai", "auras", "aura", "aurons", "aurez", "auront"]
+    }
+  },
+  {
+    "verbe": "aller",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["vais", "vas", "va", "allons", "allez", "vont"],
+      "Imparfait": ["allais", "allais", "allait", "allions", "alliez", "allaient"],
+      "Futur": ["irai", "iras", "ira", "irons", "irez", "iront"]
+    }
+  },
+  {
+    "verbe": "faire",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["fais", "fais", "fait", "faisons", "faites", "font"],
+      "Imparfait": ["faisais", "faisais", "faisait", "faisions", "faisiez", "faisaient"],
+      "Futur": ["ferai", "feras", "fera", "ferons", "ferez", "feront"]
+    }
+  },
+  {
+    "verbe": "dire",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["dis", "dis", "dit", "disons", "dites", "disent"],
+      "Imparfait": ["disais", "disais", "disait", "disions", "disiez", "disaient"],
+      "Futur": ["dirai", "diras", "dira", "dirons", "direz", "diront"]
+    }
+  },
+  {
+    "verbe": "pouvoir",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["peux", "peux", "peut", "pouvons", "pouvez", "peuvent"],
+      "Imparfait": ["pouvais", "pouvais", "pouvait", "pouvions", "pouviez", "pouvaient"],
+      "Futur": ["pourrai", "pourras", "pourra", "pourrons", "pourrez", "pourront"]
+    }
+  },
+  {
+    "verbe": "vouloir",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["veux", "veux", "veut", "voulons", "voulez", "veulent"],
+      "Imparfait": ["voulais", "voulais", "voulait", "voulions", "vouliez", "voulaient"],
+      "Futur": ["voudrai", "voudras", "voudra", "voudrons", "voudrez", "voudront"]
+    }
+  },
+  {
+    "verbe": "prendre",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["prends", "prends", "prend", "prenons", "prenez", "prennent"],
+      "Imparfait": ["prenais", "prenais", "prenait", "prenions", "preniez", "prenaient"],
+      "Futur": ["prendrai", "prendras", "prendra", "prendrons", "prendrez", "prendront"]
+    }
+  },
+  {
+    "verbe": "venir",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["viens", "viens", "vient", "venons", "venez", "viennent"],
+      "Imparfait": ["venais", "venais", "venait", "venions", "veniez", "venaient"],
+      "Futur": ["viendrai", "viendras", "viendra", "viendrons", "viendrez", "viendront"]
+    }
+  },
+  {
+    "verbe": "voir",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["vois", "vois", "voit", "voyons", "voyez", "voient"],
+      "Imparfait": ["voyais", "voyais", "voyait", "voyions", "voyiez", "voyaient"],
+      "Futur": ["verrai", "verras", "verra", "verrons", "verrez", "verront"]
+    }
+  },
+  {
+    "verbe": "savoir",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["sais", "sais", "sait", "savons", "savez", "savent"],
+      "Imparfait": ["savais", "savais", "savait", "savions", "saviez", "savaient"],
+      "Futur": ["saurai", "sauras", "saura", "saurons", "saurez", "sauront"]
+    }
+  },
+  {
+    "verbe": "devoir",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["dois", "dois", "doit", "devons", "devez", "doivent"],
+      "Imparfait": ["devais", "devais", "devait", "devions", "deviez", "devaient"],
+      "Futur": ["devrai", "devras", "devra", "devrons", "devrez", "devront"]
+    }
+  },
+  {
+    "verbe": "vouloir",
+    "groupe": 3,
+    "conjugaisons": {
+      "Présent": ["veux", "veux", "veut", "voulons", "voulez", "veulent"],
+      "Imparfait": ["voulais", "voulais", "voulait", "voulions", "vouliez", "voulaient"],
+      "Futur": ["voudrai", "voudras", "voudra", "voudrons", "voudrez", "voudront"]
+    }
+  }
+]
