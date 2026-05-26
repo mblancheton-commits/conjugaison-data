@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conju-Coach DELF</title>
+    <!-- On importe Firebase pour le classement -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; }
+        :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; --warning: #f39c12; }
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--dark); }
         .app-container { background: white; width: 95%; max-width: 550px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 550px; display: flex; flex-direction: column; margin: 20px 0; }
@@ -14,22 +17,27 @@
         .step.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-choice { padding: 15px; border: 2px solid #ddd; border-radius: 12px; background: white; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 0 #eee; text-align: center; }
+        .btn-choice { padding: 15px; border: 2px solid #ddd; border-radius: 12px; background: white; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 0 #eee; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .btn-choice:active { transform: translateY(2px); box-shadow: 0 2px 0 #eee; }
         .btn-choice.selected { background: var(--primary); color: white; border-color: var(--primary); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); transform: translateY(2px); }
         .btn-full { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--dark); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
         
-        .search-container { position: relative; width: 100%; }
-        .suggestion-list { background: white; border: 1px solid #ddd; border-radius: 10px; max-height: 150px; overflow-y: auto; margin-top: 5px; display: none; z-index: 10; position: absolute; width: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .suggestion-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; text-align: left; }
-        .suggestion-item:hover { background: #f0f7ff; }
+        /* Styles Classement & Filtres */
+        .filter-group { display: flex; gap: 5px; margin-bottom: 10px; }
+        .filter-group select { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; background: #fafafa; }
+        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
+        .leaderboard-table th { background: var(--primary); color: white; padding: 10px; text-align: left; }
+        .leaderboard-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        .leaderboard-table tr:nth-child(1) { font-weight: bold; color: #d35400; background: #fffdf0; }
 
-        .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; }
+        /* Styles Jeu */
+        .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; position: relative; }
         #verb-name { font-size: 1.8rem; font-weight: bold; color: var(--primary); text-transform: uppercase; }
         #verb-traduction { font-size: 1.1rem; color: var(--dark); display: block; margin-top: 5px; font-weight: normal; }
         #pronoun { font-size: 1.4rem; font-weight: bold; margin: 10px 0; }
+        #game-timer { font-size: 1.8rem; font-weight: bold; color: var(--error); text-align: center; margin-bottom: 5px; display: none; }
         
-        input[type="text"], input[type="number"], textarea { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; text-align: center; outline: none; font-family: inherit; }
+        input { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; text-align: center; outline: none; }
         .keyboard { display: flex; justify-content: center; gap: 5px; margin: 10px 0; flex-wrap: wrap; }
         .key { background: white; border: 1px solid #ddd; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1rem; box-shadow: 0 2px 0 #ccc; }
         
@@ -37,7 +45,6 @@
         .review-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
         .review-table td { padding: 8px; border-bottom: 1px solid #f0f0f0; }
         .error-row { background: #fff0f0; color: var(--error); font-weight: bold; }
-        .email-section { background: #f0f9ff; padding: 15px; border-radius: 12px; margin: 20px 0; border: 1px solid var(--primary); }
     </style>
 </head>
 <body>
@@ -45,59 +52,118 @@
 <div class="app-container">
     <h1 id="main-title">Conju-Coach ✍️</h1>
 
-    <!-- ÉTAPE 0 : Langue -->
+    <!-- 0. LANGUE -->
     <div id="step-lang" class="step active">
-        <p style="text-align:center">Choisissez votre langue / 언어를 선택하세요</p>
+        <p style="text-align:center; font-weight:bold;">Choisissez votre langue<br>언어를 선택하세요</p>
         <div class="btn-grid">
             <button class="btn-choice" onclick="window.setLang('fr')">Français 🇫🇷</button>
             <button class="btn-choice" onclick="window.setLang('ko')">한국어 🇰🇷</button>
         </div>
     </div>
 
-    <!-- ÉTAPE 1 : Mode -->
+    <!-- 1. MENU PRINCIPAL (Nouveau) -->
+    <div id="step-main-menu" class="step">
+        <button id="btn-menu-classic" class="btn-full" style="background:var(--primary)" onclick="window.goToStep('step-level')">🎯 Entraînement Classique</button>
+        <button id="btn-menu-challenge" class="btn-full" style="background:var(--warning)" onclick="window.goToStep('step-challenges')">🔥 Challenges (Défis)</button>
+        <button id="btn-menu-conj" class="btn-full" style="background:#34495e" onclick="window.goToStep('step-conj')">📖 Conjugueur</button>
+        <button id="btn-menu-lb" class="btn-full" style="background:var(--secondary)" onclick="window.loadLeaderboard()">🏆 Classements</button>
+    </div>
+
+    <!-- 2. CHOIX NIVEAU CLASSIQUE -->
     <div id="step-level" class="step">
-        <button id="btn-conj" class="btn-full" style="background:var(--primary); margin-bottom: 10px;" onclick="window.goToStep('step-conj')">📖 Conjugueur / 동사 변화표</button>
-        <p id="label-level" style="text-align:center">Niveau DELF :</p>
+        <h2 id="label-level" style="text-align:center; margin:0;">-</h2>
         <div class="btn-grid">
             <button class="btn-choice" onclick="window.selectLevel('A1')">A1</button>
             <button class="btn-choice" onclick="window.selectLevel('A2')">A2</button>
             <button class="btn-choice" onclick="window.selectLevel('B1')">B1</button>
             <button class="btn-choice" onclick="window.selectLevel('B2')">B2</button>
         </div>
-        <button id="btn-custom-trigger" class="btn-choice" style="width:100%; margin-top:10px;" onclick="window.goToStep('step-custom')">⚙️ Personnalisé</button>
+        <button id="btn-custom-trigger" class="btn-choice" style="width:100%; margin-top:10px;" onclick="window.goToStep('step-custom')">-</button>
+        <button class="btn-full" style="background:#95a5a6; margin-top:20px;" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
     </div>
 
-    <!-- ÉTAPE CONJUGUEUR -->
-    <div id="step-conj" class="step">
-        <p id="label-search" style="text-align:center">Rechercher un verbe :</p>
-        <div class="search-container">
-            <input type="text" id="search-input" oninput="window.updateSuggestions()" autocomplete="off">
-            <div id="suggestions" class="suggestion-list"></div>
+    <!-- 3. MENU CHALLENGES (Nouveau) -->
+    <div id="step-challenges" class="step">
+        <h2 style="text-align:center; margin:0;">🔥 Modes de Jeu</h2>
+        <div class="btn-grid">
+            <button class="btn-choice" onclick="window.selectChallengeMode('sudden-death')">☠️ Mort Subite<br><small>1 erreur = Fini</small></button>
+            <button class="btn-choice" onclick="window.selectChallengeMode('time-attack')">⏱️ Time Attack<br><small>60 secondes</small></button>
         </div>
-        <div id="conj-results" style="margin-top:20px; overflow-y: auto; max-height: 400px; border-top:1px solid #eee; padding-top:10px;"></div>
-        <button class="btn-full" style="background:#95a5a6" onclick="window.goToStep('step-level')">➔ Retour / 뒤로 가기</button>
+        <button class="btn-choice" style="width:100%; margin-top:10px; background:#fef9e7; border-color:gold;" onclick="window.startWeightedChallenge()">
+            🌟 Time Attack Pondéré (1 min)<br>
+            <small style="font-weight:normal;">A1=1pt, A2=2pts, B1=3pts, B2=5pts</small>
+        </button>
+        
+        <div id="challenge-level-select" style="display:none; margin-top:15px; border-top:2px dashed #ddd; padding-top:15px;">
+            <p style="text-align:center; font-weight:bold; margin-top:0;">Choisissez le niveau :</p>
+            <div class="btn-grid">
+                <button class="btn-choice" onclick="window.startChallengeGame('A1')">A1</button>
+                <button class="btn-choice" onclick="window.startChallengeGame('A2')">A2</button>
+                <button class="btn-choice" onclick="window.startChallengeGame('B1')">B1</button>
+                <button class="btn-choice" onclick="window.startChallengeGame('B2')">B2</button>
+            </div>
+        </div>
+        <button class="btn-full" style="background:#95a5a6; margin-top:10px;" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
     </div>
 
-    <!-- ÉTAPE CUSTOM -->
+    <!-- CLASSEMENT -->
+    <div id="step-leaderboard" class="step">
+        <h2 id="label-lb-title" style="text-align:center; margin:0;">🏆 Top Scores</h2>
+        
+        <!-- Filtres -->
+        <div class="filter-group">
+            <select id="lb-time" onchange="window.updateLeaderboardView()">
+                <option value="week">Semaine (주)</option>
+                <option value="month">Mois (월)</option>
+                <option value="all">All-Time (전체)</option>
+            </select>
+            <select id="lb-mode" onchange="window.updateLeaderboardView()">
+                <option value="sudden-death">Mort Subite ☠️</option>
+                <option value="time-attack">Time Attack ⏱️</option>
+                <option value="time-attack-weighted">TA Pondéré 🌟</option>
+            </select>
+        </div>
+        <select id="lb-level" onchange="window.updateLeaderboardView()" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; font-weight:bold; margin-bottom:10px;">
+            <option value="A1">Niveau A1</option>
+            <option value="A2">Niveau A2</option>
+            <option value="B1">Niveau B1</option>
+            <option value="B2">Niveau B2</option>
+        </select>
+
+        <div id="leaderboard-content" style="min-height: 200px; overflow-y:auto;"></div>
+        <button class="btn-full" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
+    </div>
+
+    <!-- RECHERCHE / CONJUGUEUR -->
+    <div id="step-conj" class="step">
+        <p id="label-search" style="text-align:center">-</p>
+        <input type="text" id="search-input" oninput="window.updateSuggestions()" autocomplete="off">
+        <div id="suggestions" class="suggestion-list" style="background:white; border:1px solid #ddd; display:none; max-height:100px; overflow:auto;"></div>
+        <div id="conj-results" style="margin-top:20px; overflow-y: auto; max-height: 350px;"></div>
+        <button class="btn-full" style="background:#95a5a6" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
+    </div>
+
+    <!-- CUSTOM -->
     <div id="step-custom" class="step">
-        <p id="label-tenses" style="text-align:center">Quels temps ?</p>
+        <p id="label-tenses" style="text-align:center">-</p>
         <div class="btn-grid" id="tense-buttons"></div>
-        <button id="btn-custom-next" class="btn-full" onclick="window.confirmCustomTenses()">Suivant ➔</button>
+        <button id="btn-custom-next" class="btn-full" onclick="window.confirmCustomTenses()">-</button>
     </div>
 
-    <!-- ÉTAPE QUANTITÉ -->
+    <!-- QUANTITÉ (Classique uniquement) -->
     <div id="step-quantity" class="step">
-        <p id="label-quantity" style="text-align:center">Nombre de verbes :</p>
+        <p id="label-quantity" style="text-align:center">-</p>
         <input type="number" id="nb-verbes" value="10" min="1" max="50">
         <div style="display:flex; gap:10px; margin-top:10px;">
-            <button id="btn-infinite" class="btn-choice" style="flex:1" onclick="window.startChallenge(999)">Infini ∞</button>
-            <button id="btn-start" class="btn-full" style="flex:2; margin:0" onclick="window.startChallenge()">Commencer !</button>
+            <button id="btn-infinite" class="btn-choice" style="flex:1" onclick="window.startClassic(999)">-</button>
+            <button id="btn-start" class="btn-full" style="flex:2; margin:0" onclick="window.startClassic()">-</button>
         </div>
     </div>
 
-    <!-- ÉTAPE JEU -->
+    <!-- JEU -->
     <div id="step-game" class="step">
         <div id="game-progress" style="text-align: right; font-weight: bold; color: var(--primary);">0 / 10</div>
+        <div id="game-timer">⏳ 01:00</div>
         <div class="verb-card">
             <div id="verb-name">---</div>
             <span id="verb-traduction"></span>
@@ -114,19 +180,26 @@
             </div>
         </div>
         <button id="btn-submit" class="btn-full" onclick="window.checkAnswer()">Vérifier</button>
-        <button id="btn-stop-infinite" class="btn-full" style="background:#95a5a6; display:none;" onclick="window.showResults()">Terminer</button>
+        <button id="btn-stop-infinite" class="btn-full" style="background:#95a5a6; display:none;" onclick="window.stopGame()">Terminer</button>
         <div id="feedback" style="text-align:center; font-weight:bold; min-height:40px; margin-top:15px;"></div>
     </div>
 
-    <!-- ÉTAPE RÉSULTATS -->
+    <!-- RÉSULTATS -->
     <div id="step-results" class="step">
-        <div class="results-header">
-            <div class="score-big" id="final-score">0 / 0</div>
-            <p id="final-percent" style="font-weight:bold">0%</p>
+        <div class="results-header" style="text-align:center;">
+            <div class="score-big" id="final-score" style="font-size:3rem; font-weight:bold; color:var(--primary);">0 / 0</div>
+            <p id="final-percent" style="font-weight:bold; font-size:1.2rem; margin-top:5px;">-</p>
         </div>
+        
+        <div id="save-score-section" style="background:#fef9e7; padding:15px; border-radius:12px; margin: 10px 0; border:1px solid gold; text-align:center;">
+            <p id="label-pseudo" style="margin:0 0 10px 0; font-weight:bold;">Mémoriser mon record :</p>
+            <input type="text" id="user-pseudo" maxlength="12" placeholder="Pseudo" style="padding:10px; margin-bottom:10px;">
+            <button class="btn-full" style="background:gold; color:var(--dark); margin:0;" onclick="window.saveScore()">💾 Enregistrer mon score</button>
+        </div>
+
         <div class="email-section">
-            <textarea id="user-comment" rows="2"></textarea>
-            <button id="btn-email" class="btn-full" style="background:var(--primary)" onclick="window.sendEmail()">📧 Crâner à Matthieu</button>
+            <textarea id="user-comment" rows="2" style="width:100%; border-radius:8px; padding:10px; border:1px solid #ddd;"></textarea>
+            <button id="btn-email" class="btn-full" style="background:var(--primary); margin-top:5px;" onclick="window.sendEmail()">📧 Crâner à Matthieu</button>
         </div>
         <div id="mistake-container"></div>
         <button id="btn-restart" class="btn-full" onclick="location.reload()">Recommencer</button>
@@ -134,17 +207,30 @@
 </div>
 
 <script>
-    // --- 1. CONFIGURATION ---
+    // --- VARIABLES GLOBALES ---
     let currentLang = 'fr';
     let fullDatabase = [];
     let currentV, currentTense, currentPIdx;
+    
+    // Variables de jeu
     let score = 0, total = 0, targetNb = 10;
     let selectedLevel = 'A1';
     let selectedTenses = [];
     let mistakeTracker = [];
+    
+    // Nouvelles variables modes & timer
+    let gameMode = 'classic'; // 'classic', 'sudden-death', 'time-attack', 'time-attack-weighted'
+    let timerInterval;
+    let timeLeft = 0;
+
+    // Simulation Base de données scores
+    let dummyScores = [
+        { pseudo: "K-Master", score: 45, mode: "time-attack", level: "B2", time: Date.now() - 100000 },
+        { pseudo: "Zoe", score: 12, mode: "sudden-death", level: "A2", time: Date.now() - 86400000 * 10 },
+        { pseudo: "Min-jun", score: 150, mode: "time-attack-weighted", level: "all", time: Date.now() - 86400000 * 40 }
+    ];
 
     const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
-    const levelsOrder = ["A1", "A2", "B1", "B2"];
     const a1Irregulars = ["être", "avoir", "faire", "aller", "prendre", "vouloir", "pouvoir", "devoir"];
 
     const tenseMap = {
@@ -160,222 +246,151 @@
 
     const i18n = {
         fr: {
-            levelLabel: "Choisissez votre niveau DELF :",
-            customBtn: "⚙️ Personnalisé",
-            searchLabel: "📖 Conjugueur : Rechercher un verbe",
-            tensesLabel: "Quels temps voulez-vous réviser ?",
-            nextBtn: "Suivant ➔",
-            qtyLabel: "Nombre de verbes :",
-            infinite: "Infini ∞",
-            startBtn: "Commencer !",
-            checkBtn: "Vérifier",
-            stopBtn: "Terminer et voir les résultats",
-            searchPlaceholder: "Tapez un verbe...",
-            commentPlaceholder: "Un commentaire ?",
-            emailBtn: "📧 Crâner à Matthieu",
-            restartBtn: "Recommencer",
-            successMsg: "✨ Bravo !",
-            errorMsg: "❌ Non :",
-            statsLabel: "de réussite",
-            reviewTitle: "Tables à réviser :",
-            perfectMsg: "Zéro faute ! 🏆",
-            errorLabel: " <-- ERREUR"
+            menuClassic: "🎯 Entraînement", menuChallenge: "🔥 Challenges", menuConj: "📖 Conjugueur", menuLead: "🏆 Classements",
+            levelLabel: "Niveau DELF :", customBtn: "⚙️ Personnalisé", searchLabel: "📖 Conjugueur",
+            qtyLabel: "Combien de verbes ?", infinite: "Infini ∞", startBtn: "Commencer !",
+            checkBtn: "Vérifier", stopBtn: "Terminer", pseudoLabel: "Mémoriser mon score (Pseudo) :",
+            emailBtn: "📧 Crâner à Matthieu", restartBtn: "Recommencer", successMsg: "✨ Bravo !",
+            errorMsg: "❌ Non :", statsLabel: "de réussite", verbsAttempted: "verbes tentés", reviewTitle: "Tables à réviser :",
+            perfectMsg: "Zéro faute ! 🏆", errorLabel: " <-- ERREUR"
         },
         ko: {
-            levelLabel: "델프 레벨을 선택하세요 :",
-            customBtn: "⚙️ 개인 설정",
-            searchLabel: "📖 동사 변화표 : 동사 검색",
-            tensesLabel: "어떤 시제를 연습하고 싶나요?",
-            nextBtn: "다음 ➔",
-            qtyLabel: "몇 개의 동사를 연습할까요?",
-            infinite: "무한 모드 ∞",
-            startBtn: "시작하기!",
-            checkBtn: "확인하기",
-            stopBtn: "종료하고 결과 보기",
-            searchPlaceholder: "동사를 입력하세요...",
-            commentPlaceholder: "의견을 남겨주세요...",
-            emailBtn: "📧 선생님께 결과 보내기",
-            restartBtn: "다시 시작하기",
-            successMsg: "✨ 잘했어요!",
-            errorMsg: "❌ 정답은 :",
-            statsLabel: "성공률",
-            reviewTitle: "복습해야 할 표 :",
-            perfectMsg: "완벽해요! 최고입니다! 🏆",
-            errorLabel: " <-- 내 오답"
+            menuClassic: "🎯 기본 연습", menuChallenge: "🔥 챌린지 모드", menuConj: "📖 동사 변화표", menuLead: "🏆 순위표",
+            levelLabel: "델프 레벨 :", customBtn: "⚙️ 개인 설정", searchLabel: "📖 동사 변화표 검색",
+            qtyLabel: "동사 개수 :", infinite: "무한 모드 ∞", startBtn: "시작하기!",
+            checkBtn: "확인하기", stopBtn: "종료", pseudoLabel: "기록 저장하기 (이름/닉네임):",
+            emailBtn: "📧 선생님께 결과 보내기", restartBtn: "다시 시작하기", successMsg: "✨ 잘했어요!",
+            errorMsg: "❌ 정답 :", statsLabel: "성공률", verbsAttempted: "개 동사 시도함", reviewTitle: "복습해야 할 표 :",
+            perfectMsg: "완벽해요! 🏆", errorLabel: " <-- 내 오답"
         }
     };
 
-    const tenseWeights = {
-        "A1": { "Présent": 100 },
-        "A2": { "Présent": 20, "Passé composé": 30, "Imparfait": 30, "Conditionnel présent": 20, "Impératif présent": 10 },
-        "B1": { "Présent": 10, "Passé composé": 20, "Imparfait": 20, "Futur simple": 10, "Impératif présent": 10, "Conditionnel présent": 10, "Plus-que-parfait": 10, "Subjonctif présent": 10 },
-        "B2": { "Présent": 5, "Passé composé": 20, "Imparfait": 10, "Futur simple": 10, "Impératif présent": 5, "Conditionnel présent": 10, "Plus-que-parfait": 10, "Subjonctif présent": 30 }
-    };
-
-    // --- 2. FONCTIONS GLOBALES ---
+    // --- NAVIGATION & INIT ---
 
     window.setLang = function(l) {
         currentLang = l;
         const text = i18n[l];
+        document.getElementById('btn-menu-classic').innerText = text.menuClassic;
+        document.getElementById('btn-menu-challenge').innerText = text.menuChallenge;
+        document.getElementById('btn-menu-conj').innerText = text.menuConj;
+        document.getElementById('btn-menu-lb').innerText = text.menuLead;
         document.getElementById('label-level').innerText = text.levelLabel;
         document.getElementById('btn-custom-trigger').innerText = text.customBtn;
         document.getElementById('label-search').innerText = text.searchLabel;
-        document.getElementById('search-input').placeholder = text.searchPlaceholder;
-        document.getElementById('label-tenses').innerText = text.tensesLabel;
-        document.getElementById('btn-custom-next').innerText = text.nextBtn;
         document.getElementById('label-quantity').innerText = text.qtyLabel;
         document.getElementById('btn-infinite').innerText = text.infinite;
         document.getElementById('btn-start').innerText = text.startBtn;
         document.getElementById('btn-submit').innerText = text.checkBtn;
         document.getElementById('btn-stop-infinite').innerText = text.stopBtn;
-        document.getElementById('user-comment').placeholder = text.commentPlaceholder;
         document.getElementById('btn-email').innerText = text.emailBtn;
         document.getElementById('btn-restart').innerText = text.restartBtn;
-        window.goToStep('step-level');
+        document.getElementById('label-pseudo').innerText = text.pseudoLabel;
+        window.goToStep('step-main-menu');
     };
 
     window.goToStep = function(id) {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        if(id === 'step-custom') window.renderTenseButtons();
-        if(id === 'step-conj') { 
-            document.getElementById('search-input').value = ""; 
-            document.getElementById('conj-results').innerHTML = ""; 
-        }
-    };
-
-    window.renderTenseButtons = function() {
-        const container = document.getElementById('tense-buttons');
-        container.innerHTML = "";
-        Object.keys(tenseMap).forEach(t => {
-            const btn = document.createElement('button');
-            btn.className = "btn-choice";
-            btn.innerText = (currentLang === 'ko') ? tenseMap[t].ko : t;
-            btn.onclick = () => {
-                btn.classList.toggle('selected');
-                if(selectedTenses.includes(t)) selectedTenses = selectedTenses.filter(x => x !== t);
-                else selectedTenses.push(t);
-            };
-            container.appendChild(btn);
-        });
-    };
-
-    window.updateSuggestions = function() {
-        const input = document.getElementById('search-input').value.toLowerCase().trim();
-        const suggBox = document.getElementById('suggestions');
-        suggBox.innerHTML = "";
-        if (input.length < 1) { suggBox.style.display = "none"; return; }
-        const matches = fullDatabase.filter(v => v.verbe.toLowerCase().startsWith(input)).slice(0, 5);
-        if (matches.length > 0) {
-            matches.forEach(v => {
-                const div = document.createElement('div');
-                div.className = "suggestion-item";
-                div.innerText = `${v.verbe} (${v.traduction || ''})`;
-                div.onclick = () => window.displayVerbTables(v);
-                suggBox.appendChild(div);
-            });
-            suggBox.style.display = "block";
-        } else {
-            suggBox.style.display = "none";
-        }
-    };
-
-    window.displayVerbTables = function(verb) {
-        document.getElementById('suggestions').style.display = "none";
-        document.getElementById('search-input').value = verb.verbe;
-        const container = document.getElementById('conj-results');
-        container.innerHTML = `<h2>${verb.verbe.toUpperCase()}</h2><p>(${verb.traduction || ''})</p>`;
-        Object.keys(verb.conjugaisons).forEach(t => {
-            const displayTense = (currentLang === 'ko') ? tenseMap[t].ko : t;
-            let html = `<div class="review-block"><h3>${displayTense}</h3><table class="review-table">`;
-            verb.conjugaisons[t].forEach((conj, idx) => {
-                if (conj === "") return;
-                html += `<tr><td>${window.getPronoun(idx, conj, t)}</td><td><b>${conj}</b></td></tr>`;
-            });
-            container.innerHTML += html + `</table></div>`;
-        });
     };
 
     window.getPronoun = function(pIdx, verbForm, tName) {
-        // CAS PARTICULIER : IMPÉRATIF
-        if (tName === "Impératif présent") {
-            return "(" + pronoms[pIdx] + ") ";
-        }
-
-        // CAS GÉNÉRAL : ÉLISION POUR "JE"
+        if (tName === "Impératif présent") return "(" + pronoms[pIdx] + ") ";
         if (pIdx === 0) {
-            const firstLetter = verbForm.normalize("NFD").replace(/[\u0300-\u036f]/g, "").charAt(0).toLowerCase();
-            const vowels = ['a', 'e', 'i', 'o', 'u', 'y'];
-            return vowels.includes(firstLetter) ? "J'" : "Je ";
+            const first = verbForm.normalize("NFD").replace(/[\u0300-\u036f]/g, "").charAt(0).toLowerCase();
+            return ['a','e','i','o','u','y'].includes(first) ? "J'" : "Je ";
         }
         return pronoms[pIdx] + " ";
     };
 
+    // --- MODES DE JEUX ---
+
     window.selectLevel = function(lvl) {
         selectedLevel = lvl;
-        selectedTenses = Object.keys(tenseWeights[lvl]);
+        selectedTenses = (lvl === "A1") ? ["Présent"] : ["Présent", "Imparfait", "Passé composé", "Futur simple", "Conditionnel présent", "Impératif présent", "Plus-que-parfait", "Subjonctif présent"];
         window.goToStep('step-quantity');
     };
 
-    window.confirmCustomTenses = function() {
-        if(selectedTenses.length === 0) return alert(currentLang === 'ko' ? "시제를 선택해 주세요!" : "Choisissez au moins un temps !");
-        selectedLevel = "CUSTOM";
-        window.goToStep('step-quantity');
-    };
-
-    window.startChallenge = function(nb) {
+    window.startClassic = function(nb) {
+        gameMode = 'classic';
         targetNb = nb || parseInt(document.getElementById('nb-verbes').value);
+        window.startGameLogic();
+    };
+
+    window.selectChallengeMode = function(mode) {
+        gameMode = mode;
+        document.getElementById('challenge-level-select').style.display = 'block';
+    };
+
+    window.startChallengeGame = function(lvl) {
+        selectedLevel = lvl;
+        selectedTenses = (lvl === "A1") ? ["Présent"] : ["Présent", "Imparfait", "Passé composé", "Futur simple", "Conditionnel présent", "Impératif présent", "Plus-que-parfait", "Subjonctif présent"];
+        targetNb = 999; // Infini jusqu'à la fin du temps ou l'erreur
+        window.startGameLogic();
+    };
+
+    window.startWeightedChallenge = function() {
+        gameMode = 'time-attack-weighted';
+        selectedTenses = ["Présent", "Imparfait", "Passé composé", "Futur simple", "Conditionnel présent", "Impératif présent", "Plus-que-parfait", "Subjonctif présent"];
+        targetNb = 999;
+        window.startGameLogic();
+    };
+
+    window.startGameLogic = function() {
         score = 0; total = 0; mistakeTracker = [];
-        document.getElementById('btn-stop-infinite').style.display = (targetNb === 999) ? 'block' : 'none';
+        document.getElementById('btn-stop-infinite').style.display = (gameMode === 'classic' && targetNb === 999) ? 'block' : 'none';
+        document.getElementById('save-score-section').style.display = "block";
         window.goToStep('step-game');
+        
+        // Gestion du Timer
+        if(gameMode === 'time-attack' || gameMode === 'time-attack-weighted') {
+            document.getElementById('game-timer').style.display = 'block';
+            timeLeft = 60;
+            document.getElementById('game-timer').innerText = "⏳ 01:00";
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let sec = timeLeft < 10 ? "0" + timeLeft : timeLeft;
+                document.getElementById('game-timer').innerText = "⏳ 00:" + sec;
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    window.showResults();
+                }
+            }, 1000);
+        } else {
+            document.getElementById('game-timer').style.display = 'none';
+        }
+        
         window.initJeu();
     };
 
     window.initJeu = function() {
-        if (total >= targetNb) return window.showResults();
-        document.getElementById('game-progress').innerText = (targetNb === 999) ? `Verbe ${total + 1} (∞)` : `${total + 1} / ${targetNb}`;
+        if (gameMode === 'classic' && total >= targetNb) return window.showResults();
+        
+        if (gameMode === 'time-attack-weighted') {
+            document.getElementById('game-progress').innerText = `Score : ${score} pts`;
+        } else {
+            document.getElementById('game-progress').innerText = (targetNb === 999) ? `Verbe ${total + 1} (∞)` : `${total + 1} / ${targetNb}`;
+        }
+        
         let valid = false;
-        let attempts = 0;
-        while(!valid && attempts < 500) {
-            attempts++;
-            let targetTense = window.pickWeightedTense(selectedTenses);
-            const maxLvlIdx = levelsOrder.indexOf(selectedLevel === "CUSTOM" ? "B2" : selectedLevel);
-            let pool = fullDatabase.filter(v => levelsOrder.indexOf(v.niveau) <= maxLvlIdx);
-            if (selectedLevel === "A1") {
-                const isIrregTarget = Math.random() < 0.5;
-                let subPool = pool.filter(v => isIrregTarget ? a1Irregulars.includes(v.verbe) : !a1Irregulars.includes(v.verbe));
-                if (subPool.length > 0) pool = subPool;
-            }
-            let finalPool = pool.filter(v => v.conjugaisons[targetTense]);
-            if (selectedLevel === "A2" && targetTense === "Conditionnel présent") {
-                finalPool = finalPool.filter(v => ["vouloir", "aimer", "pouvoir", "devoir"].includes(v.verbe));
-            }
-            if (finalPool.length > 0) {
-                currentV = finalPool[Math.floor(Math.random() * finalPool.length)];
-                currentTense = targetTense;
+        while(!valid) {
+            let tempV = fullDatabase[Math.floor(Math.random() * fullDatabase.length)];
+            let possibleTenses = Object.keys(tempV.conjugaisons).filter(t => selectedTenses.includes(t));
+            if (possibleTenses.length > 0) {
+                currentV = tempV;
+                currentTense = possibleTenses[Math.floor(Math.random() * possibleTenses.length)];
                 valid = true;
             }
         }
         do { currentPIdx = Math.floor(Math.random() * 6); } while (currentV.conjugaisons[currentTense][currentPIdx] === "");
+        
         document.getElementById('verb-name').innerText = currentV.verbe;
         document.getElementById('verb-traduction').innerText = currentV.traduction ? `(${currentV.traduction})` : "";
-        document.getElementById('tense-display').innerText = (currentLang === 'ko') ? tenseMap[currentTense].ko : currentTense;
+        document.getElementById('tense-display').innerText = (currentLang === 'ko') ? (tenseMap[currentTense]?.ko || currentTense) : currentTense;
         document.getElementById('pronoun').innerText = window.getPronoun(currentPIdx, currentV.conjugaisons[currentTense][currentPIdx], currentTense) + "...";
-        const input = document.getElementById('answer-input');
-        input.value = ""; input.disabled = false;
+        document.getElementById('answer-input').value = "";
+        document.getElementById('answer-input').disabled = false;
         document.getElementById('feedback').innerText = "";
-        input.focus();
-    };
-
-    window.pickWeightedTense = function(availableTenses) {
-        if (selectedLevel === "CUSTOM") return availableTenses[Math.floor(Math.random() * availableTenses.length)];
-        let weights = tenseWeights[selectedLevel];
-        let pool = [];
-        availableTenses.forEach(t => {
-            let w = weights[t] || 0;
-            for (let i = 0; i < w; i++) pool.push(t);
-        });
-        return pool[Math.floor(Math.random() * pool.length)];
+        document.getElementById('answer-input').focus();
     };
 
     window.checkAnswer = function() {
@@ -385,73 +400,144 @@
         const input = inputField.value.trim().toLowerCase();
         inputField.disabled = true;
         total++;
+        
         if (input === solution) {
-            score++;
-            document.getElementById('feedback').innerHTML = `<span style='color:var(--secondary)'>${i18n[currentLang].successMsg}</span>`;
-            setTimeout(window.initJeu, 1000);
+            let pts = 1;
+            if(gameMode === 'time-attack-weighted') {
+                let lvl = currentV.niveau || "A1"; 
+                if(lvl === "A2") pts = 2; else if(lvl === "B1") pts = 3; else if(lvl === "B2") pts = 5;
+                score += pts;
+            } else {
+                score++;
+            }
+            
+            let ptsText = gameMode === 'time-attack-weighted' ? ` (+${pts} pts)` : '';
+            document.getElementById('feedback').innerHTML = `<span style='color:var(--secondary)'>${i18n[currentLang].successMsg}${ptsText}</span>`;
+            setTimeout(window.initJeu, 800);
         } else {
             document.getElementById('feedback').innerHTML = `<span style='color:var(--error)'>${i18n[currentLang].errorMsg} <b>${solution}</b></span>`;
-            const alreadyNoted = mistakeTracker.some(m => m.verb.verbe === currentV.verbe && m.tense === currentTense);
-            if (!alreadyNoted) mistakeTracker.push({verb: currentV, tense: currentTense, errorIdx: currentPIdx});
-            setTimeout(window.initJeu, 2500);
+            mistakeTracker.push({verb: currentV, tense: currentTense, errorIdx: currentPIdx});
+            
+            if(gameMode === 'sudden-death') {
+                if(timerInterval) clearInterval(timerInterval);
+                setTimeout(window.showResults, 2000);
+            } else {
+                setTimeout(window.initJeu, 2000);
+            }
         }
+    };
+
+    window.stopGame = function() {
+        if(timerInterval) clearInterval(timerInterval);
+        window.showResults();
     };
 
     window.showResults = function() {
         window.goToStep('step-results');
-        document.getElementById('final-score').innerText = `${score} / ${total}`;
-        document.getElementById('final-percent').innerText = `${Math.round((score/total)*100)}% ${i18n[currentLang].statsLabel}`;
+        if (gameMode === 'time-attack-weighted') {
+            document.getElementById('final-score').innerText = `${score} pts`;
+            document.getElementById('final-percent').innerText = `${total} ${i18n[currentLang].verbsAttempted}`;
+        } else if (gameMode === 'time-attack' || gameMode === 'sudden-death') {
+            document.getElementById('final-score').innerText = `${score}`;
+            document.getElementById('final-percent').innerText = `${total} ${i18n[currentLang].verbsAttempted}`;
+        } else {
+            document.getElementById('final-score').innerText = `${score} / ${total}`;
+            document.getElementById('final-percent').innerText = `${Math.round((score/total)*100)}% ${i18n[currentLang].statsLabel}`;
+        }
+
         const container = document.getElementById('mistake-container');
         container.innerHTML = mistakeTracker.length > 0 ? `<h3>${i18n[currentLang].reviewTitle}</h3>` : `<h3>${i18n[currentLang].perfectMsg}</h3>`;
         mistakeTracker.forEach(m => {
-            const displayTense = (currentLang === 'ko') ? tenseMap[m.tense].ko : m.tense;
-            const trad = m.verb.traduction ? ` (${m.verb.traduction})` : "";
-            let html = `<div class="review-block"><h3>${m.verb.verbe}${trad} - ${displayTense}</h3><table class="review-table">`;
+            const displayTense = (currentLang === 'ko') ? (tenseMap[m.tense]?.ko || m.tense) : m.tense;
+            let html = `<div class="review-block"><h3>${m.verb.verbe} - ${displayTense}</h3><table class="review-table">`;
             m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
                 if(conj === "") return;
-                html += `<tr ${idx === m.errorIdx ? "class='error-row'" : ""}><td>${window.getPronoun(idx, conj, m.tense)}</td><td>${conj} ${idx === m.errorIdx ? i18n[currentLang].errorLabel : ''}</td></tr>`;
+                html += `<tr ${idx === m.errorIdx ? "class='error-row'" : ""}><td>${window.getPronoun(idx, conj, m.tense)}</td><td>${conj}</td></tr>`;
             });
             container.innerHTML += html + "</table></div>";
         });
     };
 
-    window.sendEmail = function() {
-        const emailProf = "m.blancheton@gmail.com";
-        const sujet = `Regarde comme je suis trop forte ! (${selectedLevel})`;
-        const commentaire = document.getElementById('user-comment').value || "Aucun commentaire.";
-        let corps = `Score : ${score} / ${total} (${Math.round((score/total)*100)}%)\nCommentaire : ${commentaire}\n\n`;
-        if (mistakeTracker.length > 0) {
-            corps += `ERREURS :\n`;
-            mistakeTracker.forEach(m => {
-                const trad = m.verb.traduction ? ` [${m.verb.traduction}]` : "";
-                corps += `\n- ${m.verb.verbe.toUpperCase()}${trad} (${m.tense})\n`;
-                m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
-                    if(conj === "") return;
-                    corps += `${window.getPronoun(idx, conj, m.tense)}: ${conj}${idx === m.errorIdx ? " <-- ERREUR" : ""}\n`;
-                });
+    // --- LEADERBOARD & SAUVEGARDE ---
+
+    window.saveScore = function() {
+        const pseudo = document.getElementById('user-pseudo').value.trim();
+        if(!pseudo) return alert("Indique un pseudo !");
+        
+        const scoreData = { 
+            pseudo, 
+            score, 
+            mode: gameMode, 
+            level: gameMode === 'time-attack-weighted' ? 'all' : selectedLevel,
+            time: Date.now()
+        };
+        
+        dummyScores.push(scoreData); // Simulation locale
+        alert("Score enregistré (Mode Démo) !");
+        document.getElementById('save-score-section').style.display = "none";
+    };
+
+    window.loadLeaderboard = function() {
+        window.goToStep('step-leaderboard');
+        window.updateLeaderboardView();
+    };
+
+    window.updateLeaderboardView = function() {
+        const timeF = document.getElementById('lb-time').value;
+        const modeF = document.getElementById('lb-mode').value;
+        const levelF = document.getElementById('lb-level').value;
+        
+        // Cache le filtre de niveau si c'est le mode pondéré (car il mixe tous les niveaux)
+        document.getElementById('lb-level').style.display = (modeF === 'time-attack-weighted') ? 'none' : 'block';
+        
+        const now = Date.now();
+        let filtered = dummyScores.filter(s => {
+            if(s.mode !== modeF) return false;
+            if(modeF !== 'time-attack-weighted' && s.level !== levelF) return false;
+            
+            const diff = now - s.time;
+            if(timeF === 'week' && diff > 7 * 86400000) return false;
+            if(timeF === 'month' && diff > 30 * 86400000) return false;
+            return true;
+        });
+        
+        filtered.sort((a,b) => b.score - a.score);
+        
+        let html = `<table class="leaderboard-table"><tr><th>#</th><th>Nom</th><th>Score</th></tr>`;
+        if(filtered.length === 0) {
+            html += `<tr><td colspan="3" style="text-align:center; padding:20px;">Aucun score pour ce filtre</td></tr>`;
+        } else {
+            filtered.slice(0,10).forEach((s, idx) => {
+                let textScore = modeF === 'time-attack-weighted' ? `${s.score} pts` : s.score;
+                html += `<tr><td>${idx+1}</td><td>${s.pseudo}</td><td style="font-weight:bold;">${textScore}</td></tr>`;
             });
         }
-        window.location.href = `mailto:${emailProf}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+        html += `</table>`;
+        document.getElementById('leaderboard-content').innerHTML = html;
     };
 
     window.insertChar = function(char) {
         const input = document.getElementById('answer-input');
-        if (input.disabled) return;
-        const start = input.selectionStart;
-        input.value = input.value.slice(0, start) + char + input.value.slice(input.selectionEnd);
+        input.value += char;
         input.focus();
     };
 
-    // --- 3. INITIALISATION ---
+    window.sendEmail = function() {
+        const emailProf = "m.blancheton@gmail.com";
+        const sujet = `Résultats Conjugaison - ${gameMode}`;
+        let corps = `Score : ${score}\nTotal tentés : ${total}\n\nCommentaire : ${document.getElementById('user-comment').value}`;
+        window.location.href = `mailto:${emailProf}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+    };
+
+    // Chargement BDD
+    fetch('verbes.json').then(res => res.json()).then(data => { fullDatabase = data; }).catch(()=>console.log("Erreur chargement verbes.json"));
+
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const active = document.querySelector('.step.active');
             if(active && active.id === 'step-game') window.checkAnswer();
         }
     });
-
-    fetch('verbes.json').then(res => res.json()).then(data => { fullDatabase = data; });
 </script>
-
 </body>
 </html>
