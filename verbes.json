@@ -20,9 +20,11 @@
       "Présent": ["ai", "as", "a", "avons", "avez", "ont"],
       "Imparfait": ["avais", "avais", "avait", "avions", "aviez", "avaient"],
       "Passé composé": ["ai eu", "as eu", "a eu", "avons eu", "avez eu", "ont eu"],
+      "Plus-que-parfait": ["avais eu", "avais eu", "avait eu", "avions eu", "aviez eu", "avaient eu"],
       "Futur simple": ["aurai", "auras", "aura", "aurons", "aurez", "auront"],
       "Conditionnel présent": ["aurais", "aurais", "aurait", "aurions", "auriez", "auraient"],
-      "Subjonctif présent": ["aie", "aies", "ait", "ayons", "ayez", "aient"]
+      "Subjonctif présent": ["aie", "aies", "ait", "ayons", "ayez", "aient"],
+      "Impératif présent": ["aie", "", "", "ayons", "ayez", ""]
     }
   },
   {
@@ -32,7 +34,38 @@
       "Présent": ["aime", "aimes", "aime", "aimons", "aimez", "aiment"],
       "Imparfait": ["aimais", "aimais", "aimait", "aimions", "aimiez", "aimaient"],
       "Passé composé": ["ai aimé", "as aimé", "a aimé", "avons aimé", "avez aimé", "ont aimé"],
-      "Conditionnel présent": ["aimerais", "aimerais", "aimerait", "aimerions", "aimeriez", "aimeraient"]
+      "Plus-que-parfait": ["avais aimé", "avais aimé", "avait aimé", "avions aimé", "aviez aimé", "avaient aimé"],
+      "Futur simple": ["aimerai", "aimeras", "aimera", "aimerons", "aimerez", "aimeront"],
+      "Conditionnel présent": ["aimerais", "aimerais", "aimerait", "aimerions", "aimeriez", "aimeraient"],
+      "Subjonctif présent": ["aime", "aimes", "aime", "aimions", "aimiez", "aiment"],
+      "Impératif présent": ["aime", "", "", "aimons", "aimez", ""]
+    }
+  },
+  {
+    "verbe": "finir",
+    "niveau": "A1",
+    "conjugaisons": {
+      "Présent": ["finis", "finis", "finit", "finissons", "finissez", "finissent"],
+      "Imparfait": ["finissais", "finissais", "finissait", "finissions", "finissiez", "finissaient"],
+      "Passé composé": ["ai fini", "as fini", "a fini", "avons fini", "avez fini", "ont fini"],
+      "Plus-que-parfait": ["avais fini", "avais fini", "avait fini", "avions fini", "aviez fini", "avaient fini"],
+      "Futur simple": ["finirai", "finiras", "finira", "finirons", "finirez", "finiront"],
+      "Conditionnel présent": ["finirais", "finirais", "finirait", "finirions", "finiriez", "finiraient"],
+      "Subjonctif présent": ["finisse", "finisses", "finisse", "finissions", "finissiez", "finissent"],
+      "Impératif présent": ["finis", "", "", "finissons", "finissez", ""]
+    }
+  },
+  {
+    "verbe": "faire",
+    "niveau": "A1",
+    "conjugaisons": {
+      "Présent": ["fais", "fais", "fait", "faisons", "faites", "font"],
+      "Imparfait": ["faisais", "faisais", "faisait", "faisions", "faisiez", "faisaient"],
+      "Passé composé": ["ai fait", "as fait", "a fait", "avons fait", "avez fait", "ont fait"],
+      "Plus-que-parfait": ["avais fait", "avais fait", "avait fait", "avions fait", "aviez fait", "avaient fait"],
+      "Futur simple": ["ferai", "feras", "fera", "ferons", "ferez", "feront"],
+      "Conditionnel présent": ["ferais", "ferais", "ferait", "ferions", "feriez", "feraient"],
+      "Subjonctif présent": ["fasse", "fasses", "fasse", "fassions", "fassiez", "fassent"]
     }
   },
   {
@@ -43,25 +76,8 @@
       "Imparfait": ["allais", "allais", "allait", "allions", "alliez", "allaient"],
       "Passé composé": ["suis allé", "es allé", "est allé", "sommes allés", "êtes allés", "sont allés"],
       "Futur simple": ["irai", "iras", "ira", "irons", "irez", "iront"],
+      "Conditionnel présent": ["irais", "irais", "irait", "irions", "iriez", "iraient"],
       "Subjonctif présent": ["aille", "ailles", "aille", "allions", "alliez", "aillent"]
-    }
-  },
-  {
-    "verbe": "faire",
-    "niveau": "A1",
-    "conjugaisons": {
-      "Présent": ["fais", "fais", "fait", "faisons", "faites", "font"],
-      "Imparfait": ["faisais", "faisais", "faisait", "faisions", "faisiez", "faisaient"],
-      "Futur simple": ["ferai", "feras", "fera", "ferons", "ferez", "feront"],
-      "Subjonctif présent": ["fasse", "fasses", "fasse", "fassions", "fassiez", "fassent"]
-    }
-  },
-  {
-    "verbe": "vouloir",
-    "niveau": "A1",
-    "conjugaisons": {
-      "Présent": ["veux", "veux", "veut", "voulons", "voulez", "veulent"],
-      "Conditionnel présent": ["voudrais", "voudrais", "voudrait", "voudrions", "voudriez", "voudraient"]
     }
   },
   {
@@ -69,25 +85,33 @@
     "niveau": "A1",
     "conjugaisons": {
       "Présent": ["peux", "peux", "peut", "pouvons", "pouvez", "peuvent"],
-      "Conditionnel présent": ["pourrais", "pourrais", "pourrait", "pourrions", "pourriez", "pourraient"]
+      "Imparfait": ["pouvais", "pouvais", "pouvait", "pouvions", "pouviez", "pouvaient"],
+      "Futur simple": ["pourrai", "pourras", "pourra", "pourrons", "pourrez", "pourront"],
+      "Conditionnel présent": ["pourrais", "pourrais", "pourrait", "pourrions", "pourriez", "pourraient"],
+      "Subjonctif présent": ["puisse", "puisses", "puisse", "puissions", "puissiez", "puissent"]
     }
   },
   {
-    "verbe": "prendre",
+    "verbe": "manger",
     "niveau": "A2",
     "conjugaisons": {
-      "Présent": ["prends", "prends", "prend", "prenons", "prenez", "prennent"],
-      "Imparfait": ["prenais", "prenais", "prenait", "prenions", "preniez", "prenaient"],
-      "Passé composé": ["ai pris", "as pris", "a pris", "avons pris", "avez pris", "ont pris"]
+      "Présent": ["mange", "manges", "mange", "mangeons", "mangez", "mangent"],
+      "Imparfait": ["mangeais", "mangeais", "mangeait", "mangeions", "mangeiez", "mangeaient"],
+      "Passé composé": ["ai mangé", "as mangé", "a mangé", "avons mangé", "avez mangé", "ont mangé"],
+      "Futur simple": ["mangerai", "mangeras", "mangera", "mangerons", "mangerez", "mangeront"],
+      "Conditionnel présent": ["mangerais", "mangerais", "mangerait", "mangerions", "mangeriez", "mangeraient"],
+      "Subjonctif présent": ["mange", "manges", "mange", "mangiions", "mangiiez", "mangent"]
     }
   },
   {
-    "verbe": "finir",
-    "niveau": "A1",
+    "verbe": "venir",
+    "niveau": "A2",
     "conjugaisons": {
-      "Présent": ["finis", "finis", "finit", "finissons", "finissez", "finissent"],
-      "Imparfait": ["finissais", "finissais", "finissait", "finissions", "finissiez", "finissaient"],
-      "Passé composé": ["ai fini", "as fini", "a fini", "avons fini", "avez fini", "ont fini"]
+      "Présent": ["viens", "viens", "vient", "venons", "venez", "viennent"],
+      "Imparfait": ["venais", "venais", "venait", "venions", "veniez", "venaient"],
+      "Passé composé": ["suis venu", "es venu", "est venu", "sommes venus", "êtes venus", "sont venus"],
+      "Futur simple": ["viendrai", "viendras", "viendra", "viendrons", "viendrez", "viendront"],
+      "Subjonctif présent": ["vienne", "viennes", "vienne", "venions", "veniez", "viennent"]
     }
   },
   {
@@ -95,8 +119,12 @@
     "niveau": "B1",
     "conjugaisons": {
       "Présent": ["sais", "sais", "sait", "savons", "savez", "savent"],
+      "Imparfait": ["savais", "savais", "savait", "savions", "saviez", "savaient"],
+      "Plus-que-parfait": ["avais su", "avais su", "avait su", "avions su", "aviez su", "avaient su"],
+      "Futur simple": ["saurai", "sauras", "saura", "saurons", "saurez", "sauront"],
+      "Conditionnel présent": ["saurais", "saurais", "saurait", "saurions", "sauriez", "sauraient"],
       "Subjonctif présent": ["sache", "saches", "sache", "sachions", "sachiez", "sachent"],
-      "Plus-que-parfait": ["avais su", "avais su", "avait su", "avions su", "aviez su", "avaient su"]
+      "Impératif présent": ["sache", "", "", "sachons", "sachez", ""]
     }
   }
 ]
