@@ -8,7 +8,7 @@
         :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; }
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--dark); }
-        .app-container { background: white; width: 95%; max-width: 500px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 400px; display: flex; flex-direction: column; }
+        .app-container { background: white; width: 95%; max-width: 550px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 500px; display: flex; flex-direction: column; margin: 20px 0; }
         
         h1 { text-align: center; font-size: 1.5rem; margin-top: 0; }
         .step { display: none; flex-direction: column; gap: 15px; animation: fadeIn 0.3s; }
@@ -20,29 +20,34 @@
         .btn-choice { 
             padding: 15px; border: 2px solid #ddd; border-radius: 12px; background: white; 
             font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem;
+            box-shadow: 0 4px 0 #eee;
         }
-        .btn-choice:active, .btn-choice.selected { 
+        .btn-choice:active { transform: translateY(2px); box-shadow: 0 2px 0 #eee; }
+        .btn-choice.selected { 
             background: var(--primary); color: white; border-color: var(--primary); 
-            transform: translateY(2px); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); 
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); transform: translateY(2px);
         }
-        .btn-full { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--dark); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-full { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--dark); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
 
-        /* Écran de Jeu */
+        /* Jeu */
         .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; }
-        #verb-name { font-size: 1.6rem; font-weight: bold; color: var(--primary); text-transform: uppercase; }
+        #verb-name { font-size: 1.8rem; font-weight: bold; color: var(--primary); text-transform: uppercase; }
         #pronoun { font-size: 1.4rem; font-weight: bold; margin: 10px 0; }
         input[type="text"], input[type="number"] { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.2rem; text-align: center; outline: none; }
         
         .keyboard { display: flex; justify-content: center; gap: 5px; margin: 10px 0; flex-wrap: wrap; }
-        .key { background: white; border: 1px solid #ddd; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 0 #ccc; }
+        .key { background: white; border: 1px solid #ddd; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1rem; box-shadow: 0 2px 0 #ccc; }
 
-        /* Résultats */
-        .results-card { text-align: center; }
-        .score-big { font-size: 3rem; font-weight: bold; color: var(--secondary); margin: 10px 0; }
-        .review-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
-        .review-table td { padding: 8px; border: 1px solid #ddd; }
-        .review-table tr:nth-child(even) { background: #f9f9f9; }
-        .error-highlight { color: var(--error); font-weight: bold; }
+        /* Résultats et Tables */
+        .results-header { text-align: center; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .score-big { font-size: 3.5rem; font-weight: bold; color: var(--secondary); margin: 5px 0; }
+        .mistake-list { margin-top: 20px; }
+        .review-block { background: #fff; border: 1px solid #ddd; border-radius: 12px; margin-bottom: 25px; padding: 15px; overflow: hidden; }
+        .review-block h3 { margin: 0 0 10px 0; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px; text-transform: capitalize; }
+        .review-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+        .review-table td { padding: 8px; border-bottom: 1px solid #f0f0f0; }
+        .review-table tr:last-child td { border-bottom: none; }
+        .error-row { background: #fff0f0; color: var(--error); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -59,32 +64,32 @@
             <button class="btn-choice" onclick="selectLevel('B1')">B1</button>
             <button class="btn-choice" onclick="selectLevel('B2')">B2</button>
         </div>
-        <button class="btn-choice" style="width:100%" onclick="goToStep('step-custom')">Personnalisé ⚙️</button>
+        <button class="btn-choice" style="width:100%; margin-top:10px;" onclick="goToStep('step-custom')">⚙️ Personnalisé</button>
     </div>
 
     <!-- ÉTAPE 2 : Personnalisation Temps -->
     <div id="step-custom" class="step">
-        <p style="text-align:center">Sélectionnez les temps :</p>
-        <div class="btn-grid" id="tense-buttons">
-            <!-- Généré par JS -->
-        </div>
-        <button class="btn-full" onclick="confirmCustomTenses()">Suivant</button>
+        <p style="text-align:center">Quels temps voulez-vous réviser ?</p>
+        <div class="btn-grid" id="tense-buttons"></div>
+        <button class="btn-full" onclick="confirmCustomTenses()">Suivant ➔</button>
     </div>
 
     <!-- ÉTAPE 3 : Quantité -->
     <div id="step-quantity" class="step">
-        <p style="text-align:center">Nombre de verbes pour ce défi :</p>
+        <p style="text-align:center">Combien de verbes pour ce défi ?</p>
         <input type="number" id="nb-verbes" value="10" min="1" max="50">
-        <button class="btn-choice" onclick="startChallenge(0)">Mode Illimité ∞</button>
-        <button class="btn-full" onclick="startChallenge()">Commencer !</button>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="btn-choice" style="flex:1" onclick="startChallenge(999)">Illimité ∞</button>
+            <button class="btn-full" style="flex:2; margin:0" onclick="startChallenge()">Commencer !</button>
+        </div>
     </div>
 
-    <!-- ÉTAPE 4 : Le Jeu -->
+    <!-- ÉTAPE 4 : Jeu -->
     <div id="step-game" class="step">
-        <div id="game-progress" style="font-size: 0.8rem; text-align: right;">0 / 10</div>
+        <div id="game-progress" style="text-align: right; font-weight: bold; color: var(--primary);">0 / 10</div>
         <div class="verb-card">
             <div id="verb-name">---</div>
-            <div id="tense-name" style="font-style:italic; color:#666; font-size: 0.9rem;">-</div>
+            <div id="tense-name" style="font-style:italic; color:#666;">-</div>
             <div id="pronoun">---</div>
             <input type="text" id="answer-input" placeholder="Réponse..." autocomplete="off" spellcheck="false">
             <div class="keyboard">
@@ -97,22 +102,22 @@
             </div>
         </div>
         <button class="btn-full" id="btn-submit" onclick="checkAnswer()">Vérifier</button>
-        <div id="feedback" class="feedback"></div>
+        <div id="feedback" class="feedback" style="text-align:center; font-weight:bold; min-height:40px; margin-top:15px;"></div>
     </div>
 
-    <!-- ÉTAPE 5 : Résultats -->
+    <!-- ÉTAPE 5 : Statistiques -->
     <div id="step-results" class="step">
-        <div class="results-card">
-            <h2>Challenge Terminé !</h2>
+        <div class="results-header">
+            <h2>Résultats</h2>
             <div class="score-big" id="final-score">0 / 0</div>
-            <p id="final-percent">0% de réussite</p>
-            
-            <div id="error-review" style="text-align:left; margin-top:20px;">
-                <!-- Affichera la table en cas d'erreur -->
-            </div>
-
-            <button class="btn-full" onclick="location.reload()">Recommencer</button>
+            <p id="final-percent" style="font-weight:bold">0% de réussite</p>
         </div>
+        
+        <div id="mistake-container" class="mistake-list">
+            <!-- Les tables de conjugaison des erreurs apparaîtront ici -->
+        </div>
+
+        <button class="btn-full" onclick="location.reload()">Nouvelle Session</button>
     </div>
 </div>
 
@@ -122,29 +127,28 @@
     let score = 0, total = 0, targetNb = 10;
     let selectedLevel = 'A1';
     let selectedTenses = [];
-    let lastErrorTable = "";
-    const levelsOrder = ["A1", "A2", "B1", "B2"];
-    const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
-    const tensesList = ["Présent", "Imparfait", "Passé composé", "Plus-que-parfait", "Futur simple", "Conditionnel présent", "Subjonctif présent", "Impératif présent"];
+    let mistakeTracker = []; // Stocke les objets {verb, tense} pour les erreurs
 
-    // Navigation entre étapes
-    function goToStep(stepId) {
+    const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
+    const levelsOrder = ["A1", "A2", "B1", "B2"];
+    const allTenses = ["Présent", "Imparfait", "Passé composé", "Plus-que-parfait", "Futur simple", "Conditionnel présent", "Subjonctif présent", "Impératif présent"];
+
+    function goToStep(id) {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.getElementById(stepId).classList.add('active');
-        if(stepId === 'step-custom') renderTenseButtons();
+        document.getElementById(id).classList.add('active');
+        if(id === 'step-custom') renderTenseButtons();
     }
 
-    // Génération des boutons de temps (Mode Custom)
     function renderTenseButtons() {
         const container = document.getElementById('tense-buttons');
         container.innerHTML = "";
-        tensesList.forEach(t => {
+        allTenses.forEach(t => {
             const btn = document.createElement('button');
             btn.className = "btn-choice";
             btn.innerText = t;
             btn.onclick = () => {
                 btn.classList.toggle('selected');
-                if(selectedTenses.includes(t)) selectedTenses = selectedTenses.filter(item => item !== t);
+                if(selectedTenses.includes(t)) selectedTenses = selectedTenses.filter(x => x !== t);
                 else selectedTenses.push(t);
             };
             container.appendChild(btn);
@@ -166,8 +170,8 @@
     }
 
     function startChallenge(nb) {
-        targetNb = (nb === 0) ? 999 : parseInt(document.getElementById('nb-verbes').value);
-        score = 0; total = 0;
+        targetNb = nb || parseInt(document.getElementById('nb-verbes').value);
+        score = 0; total = 0; mistakeTracker = [];
         goToStep('step-game');
         initJeu();
     }
@@ -177,20 +181,16 @@
         
         document.getElementById('game-progress').innerText = `${total + 1} / ${targetNb}`;
         
-        let verbFilter = (v) => true;
-        if (selectedLevel !== "CUSTOM") {
-            const maxIdx = levelsOrder.indexOf(selectedLevel);
-            verbFilter = (v) => levelsOrder.indexOf(v.niveau) <= maxIdx;
-        }
+        let filteredVerbs = (selectedLevel === "CUSTOM") ? fullDatabase : 
+            fullDatabase.filter(v => levelsOrder.indexOf(v.niveau) <= levelsOrder.indexOf(selectedLevel));
 
-        let filteredVerbs = fullDatabase.filter(verbFilter);
         let valid = false;
         while(!valid) {
             let tempV = filteredVerbs[Math.floor(Math.random() * filteredVerbs.length)];
-            let possible = Object.keys(tempV.conjugaisons).filter(t => selectedTenses.includes(t));
-            if (possible.length > 0) {
+            let possibleTenses = Object.keys(tempV.conjugaisons).filter(t => selectedTenses.includes(t));
+            if (possibleTenses.length > 0) {
                 currentV = tempV;
-                currentTense = possible[Math.floor(Math.random() * possible.length)];
+                currentTense = possibleTenses[Math.floor(Math.random() * possibleTenses.length)];
                 valid = true;
             }
         }
@@ -201,41 +201,32 @@
         document.getElementById('verb-name').innerText = currentV.verbe;
         document.getElementById('tense-name').innerText = currentTense;
         document.getElementById('pronoun').innerText = pronoms[currentPIdx] + " ...";
-        document.getElementById('answer-input').value = "";
-        document.getElementById('answer-input').disabled = false;
+        const input = document.getElementById('answer-input');
+        input.value = ""; input.disabled = false;
         document.getElementById('feedback').innerText = "";
-        document.getElementById('answer-input').focus();
+        input.focus();
     }
 
     function checkAnswer() {
         const inputField = document.getElementById('answer-input');
+        if (inputField.disabled) return;
+        
         const solution = currentV.conjugaisons[currentTense][currentPIdx].toLowerCase();
         const input = inputField.value.trim().toLowerCase();
-        
         inputField.disabled = true;
         total++;
 
         if (input === solution) {
             score++;
-            document.getElementById('feedback').innerHTML = "<span style='color:var(--secondary)'>✅ Bravo !</span>";
+            document.getElementById('feedback').innerHTML = "<span style='color:var(--secondary)'>✨ Bravo !</span>";
             setTimeout(initJeu, 1000);
         } else {
             document.getElementById('feedback').innerHTML = `<span style='color:var(--error)'>❌ Non : <b>${solution}</b></span>`;
-            // Stockage de la table pour le résumé
-            lastErrorTable = generateReviewTable(currentV, currentTense, currentPIdx);
+            // On enregistre l'erreur si elle n'est pas déjà dans la liste pour ce défi
+            const alreadyNoted = mistakeTracker.some(m => m.verb.verbe === currentV.verbe && m.tense === currentTense);
+            if (!alreadyNoted) mistakeTracker.push({verb: currentV, tense: currentTense, errorIdx: currentPIdx});
             setTimeout(initJeu, 2500);
         }
-    }
-
-    function generateReviewTable(verb, tense, errorIdx) {
-        let html = `<h3>Révision : ${verb.verbe} (${tense})</h3><table class="review-table">`;
-        verb.conjugaisons[tense].forEach((conj, idx) => {
-            if(conj === "") return;
-            const isError = (idx === errorIdx) ? "class='error-highlight'" : "";
-            html += `<tr><td>${pronoms[idx]}</td><td ${isError}>${conj}</td></tr>`;
-        });
-        html += "</table>";
-        return html;
     }
 
     function showResults() {
@@ -244,9 +235,19 @@
         const percent = Math.round((score/total)*100);
         document.getElementById('final-percent').innerText = `${percent}% de réussite`;
         
-        if (score < total) {
-            document.getElementById('error-review').innerHTML = "<p>Dernière erreur commise :</p>" + lastErrorTable;
-        }
+        const container = document.getElementById('mistake-container');
+        container.innerHTML = mistakeTracker.length > 0 ? "<h3>Tables à réviser :</h3>" : "<h3>Zéro faute ! Incroyable ! 🏆</h3>";
+
+        mistakeTracker.forEach(m => {
+            let html = `<div class="review-block"><h3>${m.verb.verbe} - ${m.tense}</h3><table class="review-table">`;
+            m.verb.conjugaisons[m.tense].forEach((conj, idx) => {
+                if(conj === "") return;
+                const isError = (idx === m.errorIdx) ? "class='error-row'" : "";
+                html += `<tr ${isError}><td>${pronoms[idx]}</td><td>${conj}</td></tr>`;
+            });
+            html += "</table></div>";
+            container.innerHTML += html;
+        });
     }
 
     function insertChar(char) {
@@ -256,7 +257,6 @@
         input.focus();
     }
 
-    // Touche Entrée
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const activeStep = document.querySelector('.step.active').id;
@@ -265,7 +265,6 @@
         }
     });
 
-    // Chargement initial
     fetch('verbes.json').then(res => res.json()).then(data => { fullDatabase = data; });
 </script>
 </body>
