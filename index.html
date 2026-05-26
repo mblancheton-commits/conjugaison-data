@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conju-Coach DELF</title>
-    <!-- On importe Firebase pour le classement -->
+    <!-- On importe Firebase (Version compatibilité pour s'intégrer facilement) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
@@ -29,6 +29,8 @@
         .leaderboard-table th { background: var(--primary); color: white; padding: 10px; text-align: left; }
         .leaderboard-table td { padding: 10px; border-bottom: 1px solid #eee; }
         .leaderboard-table tr:nth-child(1) { font-weight: bold; color: #d35400; background: #fffdf0; }
+        .leaderboard-table tr:nth-child(2) { font-weight: bold; color: #7f8c8d; background: #fdfdfd; }
+        .leaderboard-table tr:nth-child(3) { font-weight: bold; color: #b87333; background: #fcf9f2; }
 
         /* Styles Jeu */
         .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; position: relative; }
@@ -61,7 +63,7 @@
         </div>
     </div>
 
-    <!-- 1. MENU PRINCIPAL (Nouveau) -->
+    <!-- 1. MENU PRINCIPAL -->
     <div id="step-main-menu" class="step">
         <button id="btn-menu-classic" class="btn-full" style="background:var(--primary)" onclick="window.goToStep('step-level')">🎯 Entraînement Classique</button>
         <button id="btn-menu-challenge" class="btn-full" style="background:var(--warning)" onclick="window.goToStep('step-challenges')">🔥 Challenges (Défis)</button>
@@ -82,7 +84,7 @@
         <button class="btn-full" style="background:#95a5a6; margin-top:20px;" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
     </div>
 
-    <!-- 3. MENU CHALLENGES (Nouveau) -->
+    <!-- 3. MENU CHALLENGES -->
     <div id="step-challenges" class="step">
         <h2 style="text-align:center; margin:0;">🔥 Modes de Jeu</h2>
         <div class="btn-grid">
@@ -207,6 +209,22 @@
 </div>
 
 <script>
+    // --- FIREBASE CONFIGURATION (Ton vrai projet) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyAG9xp3A4pdA-Cbt1qh8uM4tfC7f_1-MXY",
+        authDomain: "conjugueur-72dd9.firebaseapp.com",
+        databaseURL: "https://conjugueur-72dd9-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "conjugueur-72dd9",
+        storageBucket: "conjugueur-72dd9.firebasestorage.app",
+        messagingSenderId: "894784148887",
+        appId: "1:894784148887:web:f8f75b2ba1dc90f95aa0d2",
+        measurementId: "G-M9QR4YRMND"
+    };
+
+    // Initialisation de Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
     // --- VARIABLES GLOBALES ---
     let currentLang = 'fr';
     let fullDatabase = [];
@@ -223,12 +241,8 @@
     let timerInterval;
     let timeLeft = 0;
 
-    // Simulation Base de données scores
-    let dummyScores = [
-        { pseudo: "K-Master", score: 45, mode: "time-attack", level: "B2", time: Date.now() - 100000 },
-        { pseudo: "Zoe", score: 12, mode: "sudden-death", level: "A2", time: Date.now() - 86400000 * 10 },
-        { pseudo: "Min-jun", score: 150, mode: "time-attack-weighted", level: "all", time: Date.now() - 86400000 * 40 }
-    ];
+    // Tableau pour stocker les scores récupérés de Firebase
+    let firebaseScores = [];
 
     const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
     const a1Irregulars = ["être", "avoir", "faire", "aller", "prendre", "vouloir", "pouvoir", "devoir"];
@@ -252,7 +266,7 @@
             checkBtn: "Vérifier", stopBtn: "Terminer", pseudoLabel: "Mémoriser mon score (Pseudo) :",
             emailBtn: "📧 Crâner à Matthieu", restartBtn: "Recommencer", successMsg: "✨ Bravo !",
             errorMsg: "❌ Non :", statsLabel: "de réussite", verbsAttempted: "verbes tentés", reviewTitle: "Tables à réviser :",
-            perfectMsg: "Zéro faute ! 🏆", errorLabel: " <-- ERREUR"
+            perfectMsg: "Zéro faute ! 🏆", errorLabel: " <-- ERREUR", scoreSaved: "Score enregistré avec succès !", scoreError: "Erreur lors de l'enregistrement."
         },
         ko: {
             menuClassic: "🎯 기본 연습", menuChallenge: "🔥 챌린지 모드", menuConj: "📖 동사 변화표", menuLead: "🏆 순위표",
@@ -261,7 +275,7 @@
             checkBtn: "확인하기", stopBtn: "종료", pseudoLabel: "기록 저장하기 (이름/닉네임):",
             emailBtn: "📧 선생님께 결과 보내기", restartBtn: "다시 시작하기", successMsg: "✨ 잘했어요!",
             errorMsg: "❌ 정답 :", statsLabel: "성공률", verbsAttempted: "개 동사 시도함", reviewTitle: "복습해야 할 표 :",
-            perfectMsg: "완벽해요! 🏆", errorLabel: " <-- 내 오답"
+            perfectMsg: "완벽해요! 🏆", errorLabel: " <-- 내 오답", scoreSaved: "성공적으로 저장되었습니다!", scoreError: "저장 중 오류가 발생했습니다."
         }
     };
 
@@ -324,7 +338,7 @@
     window.startChallengeGame = function(lvl) {
         selectedLevel = lvl;
         selectedTenses = (lvl === "A1") ? ["Présent"] : ["Présent", "Imparfait", "Passé composé", "Futur simple", "Conditionnel présent", "Impératif présent", "Plus-que-parfait", "Subjonctif présent"];
-        targetNb = 999; // Infini jusqu'à la fin du temps ou l'erreur
+        targetNb = 999;
         window.startGameLogic();
     };
 
@@ -337,8 +351,16 @@
 
     window.startGameLogic = function() {
         score = 0; total = 0; mistakeTracker = [];
-        document.getElementById('btn-stop-infinite').style.display = (gameMode === 'classic' && targetNb === 999) ? 'block' : 'none';
-        document.getElementById('save-score-section').style.display = "block";
+        
+        // On n'affiche le bouton d'enregistrement du score que si ce n'est pas un entraînement classique
+        if(gameMode === 'classic') {
+            document.getElementById('save-score-section').style.display = "none";
+            document.getElementById('btn-stop-infinite').style.display = (targetNb === 999) ? 'block' : 'none';
+        } else {
+            document.getElementById('save-score-section').style.display = "block";
+            document.getElementById('btn-stop-infinite').style.display = 'none';
+        }
+
         window.goToStep('step-game');
         
         // Gestion du Timer
@@ -458,28 +480,47 @@
         });
     };
 
-    // --- LEADERBOARD & SAUVEGARDE ---
+    // --- LEADERBOARD FIREBASE ---
 
     window.saveScore = function() {
         const pseudo = document.getElementById('user-pseudo').value.trim();
         if(!pseudo) return alert("Indique un pseudo !");
         
         const scoreData = { 
-            pseudo, 
-            score, 
+            pseudo: pseudo, 
+            score: score, 
             mode: gameMode, 
             level: gameMode === 'time-attack-weighted' ? 'all' : selectedLevel,
             time: Date.now()
         };
         
-        dummyScores.push(scoreData); // Simulation locale
-        alert("Score enregistré (Mode Démo) !");
-        document.getElementById('save-score-section').style.display = "none";
+        // Envoi des données vers la base Firebase dans le noeud 'scores'
+        database.ref('scores').push(scoreData)
+            .then(() => {
+                alert(i18n[currentLang].scoreSaved);
+                document.getElementById('save-score-section').style.display = "none";
+            })
+            .catch((error) => {
+                console.error("Erreur Firebase:", error);
+                alert(i18n[currentLang].scoreError);
+            });
     };
 
     window.loadLeaderboard = function() {
         window.goToStep('step-leaderboard');
-        window.updateLeaderboardView();
+        document.getElementById('leaderboard-content').innerHTML = "<p style='text-align:center; padding: 20px;'>Chargement des champions... ⏳</p>";
+        
+        // Récupération des scores depuis Firebase
+        database.ref('scores').once('value').then((snapshot) => {
+            firebaseScores = [];
+            snapshot.forEach((childSnapshot) => {
+                firebaseScores.push(childSnapshot.val());
+            });
+            window.updateLeaderboardView();
+        }).catch((error) => {
+            console.error("Erreur de récupération Firebase:", error);
+            document.getElementById('leaderboard-content').innerHTML = "<p style='text-align:center; color:red;'>Erreur lors du chargement des scores.</p>";
+        });
     };
 
     window.updateLeaderboardView = function() {
@@ -487,11 +528,11 @@
         const modeF = document.getElementById('lb-mode').value;
         const levelF = document.getElementById('lb-level').value;
         
-        // Cache le filtre de niveau si c'est le mode pondéré (car il mixe tous les niveaux)
+        // Cache le filtre de niveau si c'est le mode pondéré
         document.getElementById('lb-level').style.display = (modeF === 'time-attack-weighted') ? 'none' : 'block';
         
         const now = Date.now();
-        let filtered = dummyScores.filter(s => {
+        let filtered = firebaseScores.filter(s => {
             if(s.mode !== modeF) return false;
             if(modeF !== 'time-attack-weighted' && s.level !== levelF) return false;
             
@@ -501,6 +542,7 @@
             return true;
         });
         
+        // Tri du plus grand au plus petit score
         filtered.sort((a,b) => b.score - a.score);
         
         let html = `<table class="leaderboard-table"><tr><th>#</th><th>Nom</th><th>Score</th></tr>`;
@@ -509,7 +551,12 @@
         } else {
             filtered.slice(0,10).forEach((s, idx) => {
                 let textScore = modeF === 'time-attack-weighted' ? `${s.score} pts` : s.score;
-                html += `<tr><td>${idx+1}</td><td>${s.pseudo}</td><td style="font-weight:bold;">${textScore}</td></tr>`;
+                let rankEmote = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : "";
+                html += `<tr>
+                    <td>${rankEmote}${idx+1}</td>
+                    <td>${s.pseudo}</td>
+                    <td style="font-weight:bold;">${textScore}</td>
+                </tr>`;
             });
         }
         html += `</table>`;
@@ -529,9 +576,13 @@
         window.location.href = `mailto:${emailProf}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
     };
 
-    // Chargement BDD
-    fetch('verbes.json').then(res => res.json()).then(data => { fullDatabase = data; }).catch(()=>console.log("Erreur chargement verbes.json"));
+    // Chargement BDD des verbes
+    fetch('verbes.json')
+        .then(res => res.json())
+        .then(data => { fullDatabase = data; })
+        .catch(() => console.log("Erreur chargement verbes.json"));
 
+    // Validation avec touche Entrée
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const active = document.querySelector('.step.active');
