@@ -36,6 +36,52 @@
     }
   },
   {
+    "verbe": "aller",
+    "niveau": "A1",
+    "conjugaisons": {
+      "Présent": ["vais", "vas", "va", "allons", "allez", "vont"],
+      "Imparfait": ["allais", "allais", "allait", "allions", "alliez", "allaient"],
+      "Passé composé": ["suis allé", "es allé", "est allé", "sommes allés", "êtes allés", "sont allés"],
+      "Futur simple": ["irai", "iras", "ira", "irons", "irez", "iront"],
+      "Subjonctif présent": ["aille", "ailles", "aille", "allions", "alliez", "aillent"]
+    }
+  },
+  {
+    "verbe": "faire",
+    "niveau": "A1",
+    "conjugaisons": {
+      "Présent": ["fais", "fais", "fait", "faisons", "faites", "font"],
+      "Imparfait": ["faisais", "faisais", "faisait", "faisions", "faisiez", "faisaient"],
+      "Futur simple": ["ferai", "feras", "fera", "ferons", "ferez", "feront"],
+      "Subjonctif présent": ["fasse", "fasses", "fasse", "fassions", "fassiez", "fassent"]
+    }
+  },
+  {
+    "verbe": "vouloir",
+    "niveau": "A1",
+    "conjugaisons": {
+      "Présent": ["veux", "veux", "veut", "voulons", "voulez", "veulent"],
+      "Conditionnel présent": ["voudrais", "voudrais", "voudrait", "voudrions", "voudriez", "voudraient"]
+    }
+  },
+  {
+    "verbe": "pouvoir",
+    "niveau": "A1",
+    "conjugaisons": {
+      "Présent": ["peux", "peux", "peut", "pouvons", "pouvez", "peuvent"],
+      "Conditionnel présent": ["pourrais", "pourrais", "pourrait", "pourrions", "pourriez", "pourraient"]
+    }
+  },
+  {
+    "verbe": "prendre",
+    "niveau": "A2",
+    "conjugaisons": {
+      "Présent": ["prends", "prends", "prend", "prenons", "prenez", "prennent"],
+      "Imparfait": ["prenais", "prenais", "prenait", "prenions", "preniez", "prenaient"],
+      "Passé composé": ["ai pris", "as pris", "a pris", "avons pris", "avez pris", "ont pris"]
+    }
+  },
+  {
     "verbe": "finir",
     "niveau": "A1",
     "conjugaisons": {
@@ -45,9 +91,12 @@
     }
   },
   {
-    "verbe": "aller",
-    "niveau": "A1",
+    "verbe": "savoir",
+    "niveau": "B1",
     "conjugaisons": {
-      "Présent": ["vais", "vas", "va", "allons", "allez", "vont"],
-      "Imparfait": ["allais", "allais", "allait", "allions", "alliez", "allaient"],
-      "Passé comp
+      "Présent": ["sais", "sais", "sait", "savons", "savez", "savent"],
+      "Subjonctif présent": ["sache", "saches", "sache", "sachions", "sachiez", "sachent"],
+      "Plus-que-parfait": ["avais su", "avais su", "avait su", "avions su", "aviez su", "avaient su"]
+    }
+  }
+]
