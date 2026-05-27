@@ -713,9 +713,20 @@
     };
 
     fetch('verbes.json')
-        .then(res => res.json())
-        .then(data => { fullDatabase = data; })
-        .catch(() => console.log("Erreur chargement verbes.json"));
+        .then(res => {
+            if (!res.ok) {
+                throw new Error("Erreur HTTP: " + res.status + " (Le fichier est introuvable sur le serveur)");
+            }
+            return res.json();
+        })
+        .then(data => { 
+            fullDatabase = data; 
+            console.log("✅ Succès : " + fullDatabase.length + " verbes ont été chargés !");
+        })
+        .catch((error) => { 
+            console.error("❌ ERREUR CRITIQUE de chargement du JSON :", error);
+            alert("Erreur de chargement des verbes. Appuie sur F12 et regarde la Console pour plus de détails.");
+        });
 
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
