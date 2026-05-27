@@ -81,7 +81,7 @@
             <button class="btn-choice" onclick="window.selectLevel('B1')">B1</button>
             <button class="btn-choice" onclick="window.selectLevel('B2')">B2</button>
         </div>
-        <button id="btn-custom-trigger" class="btn-choice" style="width:100%; margin-top:10px;" onclick="window.goToStep('step-custom')">-</button>
+        <button id="btn-custom-trigger" class="btn-choice" style="width:100%; margin-top:10px;" onclick="window.openCustomMode()">-</button>
         <button class="btn-full" style="background:#95a5a6; margin-top:20px;" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
     </div>
 
@@ -380,7 +380,7 @@
         return pronoms[pIdx] + " ";
     };
 
-    // --- MODES DE JEUX ---
+    // --- MENUS CLASSIQUE & CHALLENGES ---
     window.selectLevel = function(lvl) {
         selectedLevel = lvl;
         selectedTenses = (lvl === "A1") ? ["Présent"] : ["Présent", "Imparfait", "Passé composé", "Futur simple", "Conditionnel présent", "Impératif présent", "Plus-que-parfait", "Subjonctif présent"];
@@ -414,6 +414,91 @@
         window.startGameLogic();
     };
 
+    // --- MODE PERSONNALISÉ (CUSTOM) ---
+    window.openCustomMode = function() {
+        selectedLevel = 'Custom'; // Identifiant spécial pour ignorer les règles strictes de niveau
+        const container = document.getElementById('tense-buttons');
+        container.innerHTML = '';
+        
+        Object.keys(tenseMap).forEach(tense => {
+            let btn = document.createElement('button');
+            btn.className = 'btn-choice tense-toggle';
+            btn.dataset.tense = tense;
+            btn.innerText = currentLang === 'ko' ? tenseMap[tense].ko : tense;
+            btn.onclick = function() { this.classList.toggle('selected'); };
+            container.appendChild(btn);
+        });
+        
+        document.getElementById('label-tenses').innerText = currentLang === 'ko' ? "연습할 시제를 선택하세요 :" : "Choisissez les temps :";
+        document.getElementById('btn-custom-next').innerText = currentLang === 'ko' ? "다음 ➔" : "Suivant ➔";
+        window.goToStep('step-custom');
+    };
+
+    window.confirmCustomTenses = function() {
+        let selectedNodes = document.querySelectorAll('.tense-toggle.selected');
+        selectedTenses = Array.from(selectedNodes).map(n => n.dataset.tense);
+        
+        if (selectedTenses.length === 0) {
+            alert(currentLang === 'ko' ? "최소 하나의 시제를 선택해주세요." : "Veuillez choisir au moins un temps.");
+            return;
+        }
+        window.goToStep('step-quantity');
+    };
+
+    // --- CONJUGUEUR (DICTIONNAIRE) ---
+    window.updateSuggestions = function() {
+        const query = document.getElementById('search-input').value.trim().toLowerCase();
+        const suggBox = document.getElementById('suggestions');
+        const resultsBox = document.getElementById('conj-results');
+        
+        if (query.length < 1) {
+            suggBox.style.display = 'none';
+            resultsBox.innerHTML = '';
+            return;
+        }
+        
+        let matches = fullDatabase.filter(v => v.verbe.toLowerCase().startsWith(query)).slice(0, 5);
+        
+        suggBox.innerHTML = '';
+        if (matches.length > 0) {
+            suggBox.style.display = 'block';
+            matches.forEach(v => {
+                let div = document.createElement('div');
+                div.style.padding = "10px"; 
+                div.style.cursor = "pointer"; 
+                div.style.borderBottom = "1px solid #eee";
+                div.innerText = v.verbe + (v.traduction ? ` (${v.traduction})` : "");
+                
+                div.onclick = () => {
+                    document.getElementById('search-input').value = v.verbe;
+                    suggBox.style.display = 'none';
+                    window.showConjugation(v);
+                };
+                suggBox.appendChild(div);
+            });
+        } else {
+            suggBox.style.display = 'none';
+        }
+    };
+
+    window.showConjugation = function(v) {
+        const resultsBox = document.getElementById('conj-results');
+        let html = `<h2 style="color:var(--primary); text-align:center; text-transform:uppercase;">${v.verbe}</h2>`;
+        if(v.traduction) html += `<p style="text-align:center; margin-top:-10px; color:#7f8c8d;">${v.traduction}</p>`;
+        
+        Object.keys(v.conjugaisons).forEach(tense => {
+            html += `<div class="review-block"><h3>${currentLang === 'ko' ? tenseMap[tense].ko : tense}</h3><table class="review-table">`;
+            v.conjugaisons[tense].forEach((conj, idx) => {
+                if(conj !== "") {
+                    html += `<tr><td style="font-weight:bold; color:var(--primary); width:40%;">${window.getPronoun(idx, conj, tense)}</td><td>${conj}</td></tr>`;
+                }
+            });
+            html += `</table></div>`;
+        });
+        resultsBox.innerHTML = html;
+    };
+
+    // --- LOGIQUE DU JEU ---
     window.startGameLogic = function() {
         if (fullDatabase.length === 0) {
             alert(i18n[currentLang].dbError); return;
@@ -466,9 +551,10 @@
         while(!valid && failSafe < 1000) {
             failSafe++;
             
-            if (gameMode === 'time-attack-weighted') {
+            // Si on est en "Tous les verbes" ou en "Mode Personnalisé", on pioche dans toute la base sans restriction de niveau
+            if (gameMode === 'time-attack-weighted' || selectedLevel === 'Custom') {
                 let tempV = fullDatabase[Math.floor(Math.random() * fullDatabase.length)];
-                if (!tempV.niveau || !tempV.conjugaisons) continue;
+                if (!tempV.conjugaisons) continue;
                 let possibleTenses = Object.keys(tempV.conjugaisons).filter(t => selectedTenses.includes(t));
                 if (possibleTenses.length > 0) {
                     currentV = tempV;
@@ -478,9 +564,11 @@
                 continue;
             }
 
+            // --- Logique Standard selon le niveau (A1, A2, B1, B2) ---
             let config = levelConfigs[selectedLevel];
             let allowedLevels = levelsAllowed[selectedLevel];
 
+            // 1. Détermination du temps avec les probabilités (ex: A2 = 20% présent, 30% Imparfait...)
             let tenses = Object.keys(config.tenses);
             let weights = Object.values(config.tenses);
             let totalWeight = weights.reduce((a,b) => a+b, 0);
@@ -492,15 +580,19 @@
                 if(rand <= sum) { tempTense = tenses[i]; break; }
             }
 
+            // 2. Filtres stricts de verbes
             let validVerbs = fullDatabase.filter(v => {
                 if (!v.niveau || !allowedLevels.includes(v.niveau)) return false;
                 if (!v.conjugaisons || !v.conjugaisons[tempTense]) return false;
+                
+                // Règle de politesse (Conditionnel A2 uniquement)
                 if (selectedLevel === "A2" && tempTense === "Conditionnel présent") {
                     if (!config.politesse.includes(v.verbe.toLowerCase())) return false;
                 }
                 return true;
             });
 
+            // 3. Règle du 50/50 pour le niveau A1 (liste stricte vs réguliers)
             if (selectedLevel === "A1" && validVerbs.length > 0) {
                 let wantIrregular = Math.random() < 0.5;
                 let filteredA1 = validVerbs.filter(v => {
@@ -510,6 +602,7 @@
                 if (filteredA1.length > 0) { validVerbs = filteredA1; }
             }
 
+            // 4. Choix final
             if (validVerbs.length > 0) {
                 currentV = validVerbs[Math.floor(Math.random() * validVerbs.length)];
                 currentTense = tempTense;
@@ -517,8 +610,8 @@
             }
         }
         
+        // Anti-crash de sécurité extrême
         if(!valid) {
-            // Sécurité anti-crash au cas où
             currentV = fullDatabase.find(v => v.conjugaisons) || fullDatabase[0];
             currentTense = currentV.conjugaisons ? Object.keys(currentV.conjugaisons)[0] : "Présent";
         }
@@ -606,6 +699,7 @@
         }
     };
 
+    // --- LEADERBOARD & RÉSULTATS ---
     window.saveScore = function() {
         const pseudo = document.getElementById('user-pseudo').value.trim();
         if(!pseudo) return alert(currentLang === 'ko' ? "닉네임을 입력해주세요!" : "Indique un pseudo !");
