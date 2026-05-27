@@ -860,4 +860,77 @@
                 });
             }
             html += `</table>`;
-            document.getElementById('mini-leaderboa
+            document.getElementById('mini-leaderboard-content').innerHTML = html;
+        });
+    };
+
+    window.loadLeaderboard = function() {
+        window.goToStep('step-leaderboard');
+        document.getElementById('leaderboard-content').innerHTML = `<p style='text-align:center; padding: 20px;'>${currentLang === 'ko' ? "챔피언 기록 불러오는 중... ⏳" : "Chargement des champions... ⏳"}</p>`;
+        database.ref('scores').once('value').then((snapshot) => {
+            firebaseScores = [];
+            snapshot.forEach((childSnapshot) => firebaseScores.push(childSnapshot.val()));
+            window.updateLeaderboardView();
+        });
+    };
+
+    window.updateLeaderboardView = function() {
+        const timeF = document.getElementById('lb-time').value;
+        const modeF = document.getElementById('lb-mode').value;
+        const levelF = document.getElementById('lb-level').value;
+        document.getElementById('lb-level').style.display = (modeF === 'time-attack-weighted') ? 'none' : 'block';
+        
+        const now = Date.now();
+        let filtered = firebaseScores.filter(s => {
+            if(s.mode !== modeF) return false;
+            if(modeF !== 'time-attack-weighted' && s.level !== levelF) return false;
+            const diff = now - s.time;
+            if(timeF === 'week' && diff > 7 * 86400000) return false;
+            if(timeF === 'month' && diff > 30 * 86400000) return false;
+            return true;
+        });
+        filtered.sort((a,b) => b.score - a.score);
+        
+        let html = `<table class="leaderboard-table"><tr><th>#</th><th>${currentLang === 'ko' ? '이름' : 'Nom'}</th><th>${currentLang === 'ko' ? '점수' : 'Score'}</th></tr>`;
+        if(filtered.length === 0) {
+            html += `<tr><td colspan="3" style="text-align:center; padding:20px;">${currentLang === 'ko' ? "이 필터에 해당하는 기록이 없습니다" : "Aucun score pour ce filtre"}</td></tr>`;
+        } else {
+            filtered.slice(0,10).forEach((s, idx) => {
+                let textScore = modeF === 'time-attack-weighted' ? `${s.score} pts` : s.score;
+                let rankEmote = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : "";
+                html += `<tr><td>${rankEmote}${idx+1}</td><td>${s.pseudo}</td><td style="font-weight:bold;">${textScore}</td></tr>`;
+            });
+        }
+        html += `</table>`;
+        document.getElementById('leaderboard-content').innerHTML = html;
+    };
+
+    window.insertChar = function(char) {
+        const input = document.getElementById('answer-input');
+        input.value += char; input.focus();
+    };
+
+    window.sendKakao = function() {
+        let userComment = document.getElementById('user-comment').value;
+        let modeKo = gameMode === 'classic' ? '기본 연습' : gameMode === 'sudden-death' ? '서든 데스' : gameMode === 'time-attack' ? '타임 어택' : '타임 어택 (모든 동사)';
+        let modeFr = gameMode === 'classic' ? 'Classique' : gameMode === 'sudden-death' ? 'Mort Subite' : gameMode === 'time-attack' ? 'Time Attack' : 'Time Attack (Tous les verbes)';
+        let texteMessage = currentLang === 'ko' 
+            ? `🏆 [Conju-Coach 결과]\n모드: ${modeKo}\n점수: ${score}\n시도한 동사: ${total}\n💬 메시지: ${userComment || "없음"}`
+            : `🏆 [Résultat Conju-Coach]\nMode : ${modeFr}\nScore : ${score}\nTotal tentés : ${total}\n💬 Message : ${userComment || "Aucun"}`;
+        
+        navigator.clipboard.writeText(texteMessage).then(() => {
+            alert(currentLang === 'ko' ? "결과가 복사되었습니다! 카카오톡을 열고 마튜 쌤에게 붙여넣기 해주세요 💛" : "Résultat copié ! Tu peux le coller dans ton KakaoTalk pour Matthieu 💛");
+        });
+    };
+
+    fetch('verbes.json').then(res => res.json()).then(data => { fullDatabase = data; });
+
+    document.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const active = document.querySelector('.step.active');
+            if(active && active.id === 'step-game') window.checkAnswer();
+        }
+    });
+</script>
+</body>
+</html>
