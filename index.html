@@ -447,26 +447,19 @@
         btn.classList.toggle('selected');
         let selected = Array.from(document.querySelectorAll('.tense-toggle.selected')).map(b => b.dataset.tense);
         
-        let newWeights = {};
+        customWeights = {};
         let count = selected.length;
+        
+        // Distribution strictement égale par défaut dès qu'on coche/décoche un temps
         if (count > 0) {
-            let defaultW = Math.floor(100 / count);
-            let remainder = 100 - (defaultW * count);
+            let baseW = Math.floor(100 / count);
+            let remainder = 100 % count;
+            
             selected.forEach((t, i) => {
-                newWeights[t] = customWeights[t] !== undefined ? customWeights[t] : (defaultW + (i===0 ? remainder : 0));
+                // S'il y a un reste, on le distribue pour faire (ex: 34, 33, 33)
+                customWeights[t] = baseW + (i < remainder ? 1 : 0);
             });
-            // Recalcul sur 100%
-            let total = Object.values(newWeights).reduce((a,b)=>a+b, 0);
-            if(total > 0) {
-                selected.forEach(t => newWeights[t] = Math.round((newWeights[t]/total)*100));
-                let diff = 100 - Object.values(newWeights).reduce((a,b)=>a+b, 0);
-                if (diff !== 0) newWeights[selected[0]] += diff; // Correction des arrondis
-            } else {
-                selected.forEach(t => newWeights[t] = defaultW);
-                newWeights[selected[0]] += remainder;
-            }
         }
-        customWeights = newWeights;
         window.renderCustomSliders();
     };
 
@@ -502,7 +495,7 @@
         customWeights[changedTense] = newValue;
         let targetSumOthers = 100 - newValue;
 
-        // Répartition de la différence sur les autres sliders
+        // Répartition proportionnelle de la différence sur les autres sliders
         if (others.length > 0) {
             if (oldSumOthers === 0) {
                 let share = targetSumOthers / others.length;
