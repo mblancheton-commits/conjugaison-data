@@ -91,13 +91,13 @@
             <button id="btn-mode-sd" class="btn-choice challenge-btn" onclick="window.selectChallengeMode('sudden-death', this)">☠️ Mort Subite<br><small>1 erreur = Fini</small></button>
             <button id="btn-mode-ta" class="btn-choice challenge-btn" onclick="window.selectChallengeMode('time-attack', this)">⏱️ Time Attack<br><small>60 secondes</small></button>
         </div>
-        <button class="btn-choice challenge-btn" style="width:100%; margin-top:10px; background:#fef9e7; border-color:gold;" onclick="window.startWeightedChallenge()">
+        <button id="btn-mode-ta-all" class="btn-choice challenge-btn" style="width:100%; margin-top:10px; background:#fef9e7; border-color:gold;" onclick="window.startWeightedChallenge()">
             🌟 Time Attack (Tous les verbes)<br>
             <small style="font-weight:normal;">1 min - A1=1pt, A2=2pts, B1=3pts, B2=5pts</small>
         </button>
         
         <div id="challenge-level-select" style="display:none; margin-top:15px; border-top:2px dashed #ddd; padding-top:15px;">
-            <p style="text-align:center; font-weight:bold; margin-top:0;">Choisissez le niveau :</p>
+            <p id="label-challenge-lvl" style="text-align:center; font-weight:bold; margin-top:0;">Choisissez le niveau :</p>
             <div class="btn-grid">
                 <button class="btn-choice" onclick="window.startChallengeGame('A1')">A1</button>
                 <button class="btn-choice" onclick="window.startChallengeGame('A2')">A2</button>
@@ -120,9 +120,9 @@
                 <option value="all">All-Time (전체)</option>
             </select>
             <select id="lb-mode" onchange="window.updateLeaderboardView()">
-                <option value="sudden-death">Mort Subite ☠️</option>
-                <option value="time-attack">Time Attack ⏱️</option>
-                <option value="time-attack-weighted">Time Attack (Tous les verbes) 🌟</option>
+                <option id="opt-mode-sd" value="sudden-death">Mort Subite ☠️</option>
+                <option id="opt-mode-ta" value="time-attack">Time Attack ⏱️</option>
+                <option id="opt-mode-ta-all" value="time-attack-weighted">Time Attack (Tous les verbes) 🌟</option>
             </select>
         </div>
         <select id="lb-level" onchange="window.updateLeaderboardView()" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; font-weight:bold; margin-bottom:10px;">
@@ -196,12 +196,12 @@
         <div id="save-score-section" style="background:#fef9e7; padding:15px; border-radius:12px; margin: 10px 0; border:1px solid gold; text-align:center;">
             <p id="label-pseudo" style="margin:0 0 10px 0; font-weight:bold;">Mémoriser mon record :</p>
             <input type="text" id="user-pseudo" maxlength="12" placeholder="Pseudo" style="padding:10px; margin-bottom:10px;">
-            <button class="btn-full" style="background:gold; color:var(--dark); margin:0;" onclick="window.saveScore()">💾 Enregistrer mon score</button>
+            <button id="btn-save-score" class="btn-full" style="background:gold; color:var(--dark); margin:0;" onclick="window.saveScore()">💾 Enregistrer mon score</button>
         </div>
 
         <!-- Classement Mini sur la page des résultats -->
         <div id="results-leaderboard" style="display:none; margin: 15px 0;">
-            <h3 style="text-align:center; margin-bottom:10px;">🏆 Top 10 Actuel</h3>
+            <h3 id="label-top10" style="text-align:center; margin-bottom:10px;">🏆 Top 10 Actuel</h3>
             <div id="mini-leaderboard-content" style="background:white; border-radius:10px; padding:10px; border:1px solid #ddd;"></div>
         </div>
 
@@ -209,7 +209,7 @@
         
         <div class="email-section" style="margin-top: 15px;">
             <textarea id="user-comment" rows="2" placeholder="Un petit message ?" style="width:100%; border-radius:8px; padding:10px; border:1px solid #ddd;"></textarea>
-            <button id="btn-email" class="btn-full" style="background:var(--primary); margin-top:5px;" onclick="window.sendEmail()">📧 Crâner à Matthieu</button>
+            <button id="btn-email" class="btn-full" style="background:var(--primary); margin-top:5px;" onclick="window.sendEmail()">📧 Crâner auprès de Matthieu</button>
         </div>
         <button id="btn-restart" class="btn-full" onclick="location.reload()">Recommencer</button>
     </div>
@@ -237,13 +237,11 @@
     let fullDatabase = [];
     let currentV, currentTense, currentPIdx;
     
-    // Variables de jeu
     let score = 0, total = 0, targetNb = 10;
     let selectedLevel = 'A1';
     let selectedTenses = [];
     let mistakeTracker = [];
     
-    // Variables modes & timer
     let gameMode = 'classic';
     let timerInterval;
     let timeLeft = 0;
@@ -269,19 +267,39 @@
             menuClassic: "🎯 Entraînement", menuChallenge: "🔥 Challenges", menuConj: "📖 Conjugueur", menuLead: "🏆 Classements",
             levelLabel: "Niveau DELF :", customBtn: "⚙️ Personnalisé", searchLabel: "📖 Conjugueur",
             qtyLabel: "Combien de verbes ?", infinite: "Infini ∞", startBtn: "Commencer !",
-            checkBtn: "Vérifier", stopBtn: "Terminer", pseudoLabel: "Mémoriser mon score (Pseudo) :",
-            emailBtn: "📧 Crâner à Matthieu", restartBtn: "Recommencer", successMsg: "✨ Bravo !",
+            checkBtn: "Vérifier", stopBtn: "Terminer", pseudoLabel: "Mémoriser mon record (Pseudo) :",
+            emailBtn: "📧 Crâner auprès de Matthieu", restartBtn: "Recommencer", successMsg: "✨ Bravo !",
             errorMsg: "❌ Non :", statsLabel: "de réussite", verbsAttempted: "verbes tentés", reviewTitle: "Tables à réviser :",
-            perfectMsg: "Zéro faute ! 🏆", errorLabel: " <-- ERREUR", scoreSaved: "Score enregistré avec succès !", scoreError: "Erreur lors de l'enregistrement."
+            perfectMsg: "Zéro faute ! 🏆", errorLabel: " <-- ERREUR", scoreSaved: "Score enregistré avec succès !", scoreError: "Erreur lors de l'enregistrement.",
+            modeSD: "☠️ Mort Subite<br><small>1 erreur = Fini</small>",
+            modeTA: "⏱️ Time Attack<br><small>60 secondes</small>",
+            modeTAAll: "🌟 Time Attack (Tous les verbes)<br><small style='font-weight:normal;'>1 min - A1=1pt, A2=2pts, B1=3pts, B2=5pts</small>",
+            saveScoreBtn: "💾 Enregistrer mon score",
+            lbModeSD: "Mort Subite ☠️",
+            lbModeTA: "Time Attack ⏱️",
+            lbModeTAAll: "Time Attack (Tous les verbes) 🌟",
+            top10Current: "🏆 Top 10 Actuel",
+            msgPlaceholder: "Un petit message ?",
+            chooseLevel: "Choisissez le niveau :"
         },
         ko: {
             menuClassic: "🎯 기본 연습", menuChallenge: "🔥 챌린지 모드", menuConj: "📖 동사 변화표", menuLead: "🏆 순위표",
             levelLabel: "델프 레벨 :", customBtn: "⚙️ 개인 설정", searchLabel: "📖 동사 변화표 검색",
             qtyLabel: "동사 개수 :", infinite: "무한 모드 ∞", startBtn: "시작하기!",
             checkBtn: "확인하기", stopBtn: "종료", pseudoLabel: "기록 저장하기 (이름/닉네임):",
-            emailBtn: "📧 선생님께 결과 보내기", restartBtn: "다시 시작하기", successMsg: "✨ 잘했어요!",
+            emailBtn: "📧 마튜에게 자랑하기", restartBtn: "다시 시작하기", successMsg: "✨ 잘했어요!",
             errorMsg: "❌ 정답 :", statsLabel: "성공률", verbsAttempted: "개 동사 시도함", reviewTitle: "복습해야 할 표 :",
-            perfectMsg: "완벽해요! 🏆", errorLabel: " <-- 내 오답", scoreSaved: "성공적으로 저장되었습니다!", scoreError: "저장 중 오류가 발생했습니다."
+            perfectMsg: "완벽해요! 🏆", errorLabel: " <-- 내 오답", scoreSaved: "성공적으로 저장되었습니다!", scoreError: "저장 중 오류가 발생했습니다.",
+            modeSD: "☠️ 서든 데스 (Sudden Death)<br><small>1번 틀리면 종료</small>",
+            modeTA: "⏱️ 타임 어택<br><small>60초</small>",
+            modeTAAll: "🌟 타임 어택 (모든 동사)<br><small style='font-weight:normal;'>1분 - A1=1점, A2=2점, B1=3점, B2=5점</small>",
+            saveScoreBtn: "💾 내 점수 저장하기",
+            lbModeSD: "서든 데스 ☠️",
+            lbModeTA: "타임 어택 ⏱️",
+            lbModeTAAll: "타임 어택 (모든 동사) 🌟",
+            top10Current: "🏆 현재 Top 10",
+            msgPlaceholder: "간단한 메시지를 남겨주세요",
+            chooseLevel: "레벨을 선택하세요 :"
         }
     };
 
@@ -290,6 +308,8 @@
     window.setLang = function(l) {
         currentLang = l;
         const text = i18n[l];
+        
+        // Traduction générale
         document.getElementById('btn-menu-classic').innerText = text.menuClassic;
         document.getElementById('btn-menu-challenge').innerText = text.menuChallenge;
         document.getElementById('btn-menu-conj').innerText = text.menuConj;
@@ -305,6 +325,19 @@
         document.getElementById('btn-email').innerText = text.emailBtn;
         document.getElementById('btn-restart').innerText = text.restartBtn;
         document.getElementById('label-pseudo').innerText = text.pseudoLabel;
+        
+        // Nouveaux éléments traduits
+        document.getElementById('btn-mode-sd').innerHTML = text.modeSD;
+        document.getElementById('btn-mode-ta').innerHTML = text.modeTA;
+        document.getElementById('btn-mode-ta-all').innerHTML = text.modeTAAll;
+        document.getElementById('btn-save-score').innerHTML = text.saveScoreBtn;
+        document.getElementById('opt-mode-sd').innerText = text.lbModeSD;
+        document.getElementById('opt-mode-ta').innerText = text.lbModeTA;
+        document.getElementById('opt-mode-ta-all').innerText = text.lbModeTAAll;
+        document.getElementById('label-top10').innerText = text.top10Current;
+        document.getElementById('user-comment').placeholder = text.msgPlaceholder;
+        document.getElementById('label-challenge-lvl').innerText = text.chooseLevel;
+        
         window.goToStep('step-main-menu');
     };
 
@@ -312,7 +345,6 @@
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         
-        // Si on retourne au menu, on nettoie les boutons de challenges sélectionnés
         if (id === 'step-challenges') {
             document.querySelectorAll('.challenge-btn').forEach(btn => btn.classList.remove('selected'));
             document.getElementById('challenge-level-select').style.display = 'none';
@@ -344,12 +376,10 @@
 
     window.selectChallengeMode = function(mode, element) {
         gameMode = mode;
-        // On enlève la classe "selected" à tous les boutons challenge
+        // On enlève la sélection de tous les boutons et on l'applique sur le bouton cliqué
         document.querySelectorAll('.challenge-btn').forEach(btn => btn.classList.remove('selected'));
-        // On ajoute la classe "selected" au bouton cliqué (qui devient bleu)
         if (element) element.classList.add('selected');
         
-        // On affiche les choix de niveaux
         document.getElementById('challenge-level-select').style.display = 'block';
     };
 
@@ -495,7 +525,6 @@
             container.innerHTML += html + "</table></div>";
         });
 
-        // Chargement du mini classement en bas des résultats (pour les modes challenges)
         if (gameMode !== 'classic') {
             window.loadMiniLeaderboard();
         } else {
@@ -507,7 +536,7 @@
 
     window.saveScore = function() {
         const pseudo = document.getElementById('user-pseudo').value.trim();
-        if(!pseudo) return alert("Indique un pseudo !");
+        if(!pseudo) return alert(currentLang === 'ko' ? "닉네임을 입력해주세요!" : "Indique un pseudo !");
         
         const scoreData = { 
             pseudo: pseudo, 
@@ -521,7 +550,6 @@
             .then(() => {
                 alert(i18n[currentLang].scoreSaved);
                 document.getElementById('save-score-section').style.display = "none";
-                // On met à jour le classement en direct pour que l'élève voie son score !
                 window.loadMiniLeaderboard();
             })
             .catch((error) => {
@@ -532,14 +560,13 @@
 
     window.loadMiniLeaderboard = function() {
         document.getElementById('results-leaderboard').style.display = 'block';
-        document.getElementById('mini-leaderboard-content').innerHTML = "<p style='text-align:center;'>Chargement... ⏳</p>";
+        document.getElementById('mini-leaderboard-content').innerHTML = `<p style='text-align:center;'>${currentLang === 'ko' ? "로딩 중... ⏳" : "Chargement... ⏳"}</p>`;
         
         database.ref('scores').once('value').then((snapshot) => {
             let scoresList = [];
             snapshot.forEach((childSnapshot) => {
                 let s = childSnapshot.val();
                 let expectedLevel = (gameMode === 'time-attack-weighted') ? 'all' : selectedLevel;
-                // On ne prend que les scores du mode et du niveau actuel
                 if (s.mode === gameMode && s.level === expectedLevel) {
                     scoresList.push(s);
                 }
@@ -547,9 +574,9 @@
             
             scoresList.sort((a,b) => b.score - a.score);
             
-            let html = `<table class="leaderboard-table"><tr><th>#</th><th>Nom</th><th>Score</th></tr>`;
+            let html = `<table class="leaderboard-table"><tr><th>#</th><th>${currentLang === 'ko' ? '이름' : 'Nom'}</th><th>${currentLang === 'ko' ? '점수' : 'Score'}</th></tr>`;
             if(scoresList.length === 0) {
-                html += `<tr><td colspan="3" style="text-align:center; padding:10px;">Soyez le premier à enregistrer un score !</td></tr>`;
+                html += `<tr><td colspan="3" style="text-align:center; padding:10px;">${currentLang === 'ko' ? '첫 번째로 기록을 남겨보세요!' : 'Soyez le premier à enregistrer un score !'}</td></tr>`;
             } else {
                 scoresList.slice(0,10).forEach((s, idx) => {
                     let textScore = gameMode === 'time-attack-weighted' ? `${s.score} pts` : s.score;
@@ -570,7 +597,7 @@
 
     window.loadLeaderboard = function() {
         window.goToStep('step-leaderboard');
-        document.getElementById('leaderboard-content').innerHTML = "<p style='text-align:center; padding: 20px;'>Chargement des champions... ⏳</p>";
+        document.getElementById('leaderboard-content').innerHTML = `<p style='text-align:center; padding: 20px;'>${currentLang === 'ko' ? "챔피언 기록 불러오는 중... ⏳" : "Chargement des champions... ⏳"}</p>`;
         
         database.ref('scores').once('value').then((snapshot) => {
             firebaseScores = [];
@@ -580,7 +607,7 @@
             window.updateLeaderboardView();
         }).catch((error) => {
             console.error("Erreur de récupération Firebase:", error);
-            document.getElementById('leaderboard-content').innerHTML = "<p style='text-align:center; color:red;'>Erreur lors du chargement des scores.</p>";
+            document.getElementById('leaderboard-content').innerHTML = `<p style='text-align:center; color:red;'>${currentLang === 'ko' ? "기록을 불러오는 중 오류가 발생했습니다." : "Erreur lors du chargement des scores."}</p>`;
         });
     };
 
@@ -604,9 +631,9 @@
         
         filtered.sort((a,b) => b.score - a.score);
         
-        let html = `<table class="leaderboard-table"><tr><th>#</th><th>Nom</th><th>Score</th></tr>`;
+        let html = `<table class="leaderboard-table"><tr><th>#</th><th>${currentLang === 'ko' ? '이름' : 'Nom'}</th><th>${currentLang === 'ko' ? '점수' : 'Score'}</th></tr>`;
         if(filtered.length === 0) {
-            html += `<tr><td colspan="3" style="text-align:center; padding:20px;">Aucun score pour ce filtre</td></tr>`;
+            html += `<tr><td colspan="3" style="text-align:center; padding:20px;">${currentLang === 'ko' ? "이 필터에 해당하는 기록이 없습니다" : "Aucun score pour ce filtre"}</td></tr>`;
         } else {
             filtered.slice(0,10).forEach((s, idx) => {
                 let textScore = modeF === 'time-attack-weighted' ? `${s.score} pts` : s.score;
