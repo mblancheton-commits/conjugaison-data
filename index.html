@@ -23,6 +23,9 @@
         .btn-choice.selected { background: var(--primary); color: white; border-color: var(--primary); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); transform: translateY(2px); }
         .btn-full { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--dark); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
         
+        /* Styles Sliders Personnalisés */
+        input[type="range"] { accent-color: var(--primary); cursor: pointer; }
+        
         /* Styles Classement & Filtres */
         .filter-group { display: flex; gap: 5px; margin-bottom: 10px; }
         .filter-group select { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; background: #fafafa; }
@@ -40,7 +43,7 @@
         #pronoun { font-size: 1.4rem; font-weight: bold; margin: 10px 0; }
         #game-timer { font-size: 1.8rem; font-weight: bold; color: var(--error); text-align: center; margin-bottom: 5px; display: none; }
         
-        input { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; text-align: center; outline: none; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; text-align: center; outline: none; }
         .keyboard { display: flex; justify-content: center; gap: 5px; margin: 10px 0; flex-wrap: wrap; }
         .key { background: white; border: 1px solid #ddd; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1rem; box-shadow: 0 2px 0 #ccc; }
         
@@ -145,8 +148,10 @@
 
     <!-- CUSTOM -->
     <div id="step-custom" class="step">
-        <p id="label-tenses" style="text-align:center">-</p>
+        <p id="label-tenses" style="text-align:center; margin-bottom:5px;">-</p>
         <div class="btn-grid" id="tense-buttons"></div>
+        <!-- Conteneur des Sliders de probabilités -->
+        <div id="custom-sliders-container"></div>
         <button id="btn-custom-next" class="btn-full" onclick="window.confirmCustomTenses()">-</button>
     </div>
 
@@ -237,6 +242,8 @@
     let score = 0, total = 0, targetNb = 10;
     let selectedLevel = 'A1';
     let selectedTenses = [];
+    let customWeights = {}; // Stockage des probabilités pour le mode personnalisé
+    let playedVerbs = []; // Anti-répétition : Stocke "verbe-temps"
     let mistakeTracker = [];
     
     let gameMode = 'classic';
@@ -274,7 +281,7 @@
             saveScoreBtn: "💾 Enregistrer mon score",
             lbModeSD: "Mort Subite ☠️", lbModeTA: "Time Attack ⏱️", lbModeTAAll: "Time Attack (Tous les verbes) 🌟",
             top10Current: "🏆 Top 10 Actuel", msgPlaceholder: "Un petit message ?", chooseLevel: "Choisissez le niveau :",
-            dbError: "Impossible de lancer le jeu : les verbes n'ont pas encore été chargés ou le fichier est introuvable."
+            dbError: "Impossible de lancer le jeu : les verbes n'ont pas encore été chargés."
         },
         ko: {
             menuClassic: "🎯 기본 연습", menuChallenge: "🔥 챌린지 모드", menuConj: "📖 동사 변화표", menuLead: "🏆 순위표",
@@ -288,11 +295,11 @@
             modeTAAll: "🌟 타임 어택 (모든 동사)<br><small style='font-weight:normal;'>1분 - A1=1점, A2=2점, B1=3점, B2=5점</small>",
             saveScoreBtn: "💾 내 점수 저장하기", lbModeSD: "서든 데스 ☠️", lbModeTA: "타임 어택 ⏱️", lbModeTAAll: "타임 어택 (모든 동사) 🌟",
             top10Current: "🏆 현재 Top 10", msgPlaceholder: "간단한 메시지를 남겨주세요", chooseLevel: "레벨을 선택하세요 :",
-            dbError: "동사 데이터를 불러올 수 없어 게임을 시작할 수 없습니다. 잠시 후 다시 시도해주세요."
+            dbError: "동사 데이터를 불러올 수 없어 게임을 시작할 수 없습니다."
         }
     };
 
-    // --- CONFIGURATION DES NIVEAUX (POIDS ET RESTRICTIONS) ---
+    // --- CONFIGURATION DES NIVEAUX ---
     const levelConfigs = {
         "A1": {
             tenses: { "Présent": 100 },
@@ -414,18 +421,20 @@
         window.startGameLogic();
     };
 
-    // --- MODE PERSONNALISÉ (CUSTOM) ---
+    // --- MODE PERSONNALISÉ & SLIDERS DEPENDANTS ---
     window.openCustomMode = function() {
-        selectedLevel = 'Custom'; // Identifiant spécial pour ignorer les règles strictes de niveau
+        selectedLevel = 'Custom';
+        customWeights = {};
         const container = document.getElementById('tense-buttons');
         container.innerHTML = '';
+        document.getElementById('custom-sliders-container').innerHTML = '';
         
         Object.keys(tenseMap).forEach(tense => {
             let btn = document.createElement('button');
             btn.className = 'btn-choice tense-toggle';
             btn.dataset.tense = tense;
             btn.innerText = currentLang === 'ko' ? tenseMap[tense].ko : tense;
-            btn.onclick = function() { this.classList.toggle('selected'); };
+            btn.onclick = function() { window.toggleCustomTense(this, tense); };
             container.appendChild(btn);
         });
         
@@ -434,10 +443,107 @@
         window.goToStep('step-custom');
     };
 
-    window.confirmCustomTenses = function() {
-        let selectedNodes = document.querySelectorAll('.tense-toggle.selected');
-        selectedTenses = Array.from(selectedNodes).map(n => n.dataset.tense);
+    window.toggleCustomTense = function(btn, tense) {
+        btn.classList.toggle('selected');
+        let selected = Array.from(document.querySelectorAll('.tense-toggle.selected')).map(b => b.dataset.tense);
         
+        let newWeights = {};
+        let count = selected.length;
+        if (count > 0) {
+            let defaultW = Math.floor(100 / count);
+            let remainder = 100 - (defaultW * count);
+            selected.forEach((t, i) => {
+                newWeights[t] = customWeights[t] !== undefined ? customWeights[t] : (defaultW + (i===0 ? remainder : 0));
+            });
+            // Recalcul sur 100%
+            let total = Object.values(newWeights).reduce((a,b)=>a+b, 0);
+            if(total > 0) {
+                selected.forEach(t => newWeights[t] = Math.round((newWeights[t]/total)*100));
+                let diff = 100 - Object.values(newWeights).reduce((a,b)=>a+b, 0);
+                if (diff !== 0) newWeights[selected[0]] += diff; // Correction des arrondis
+            } else {
+                selected.forEach(t => newWeights[t] = defaultW);
+                newWeights[selected[0]] += remainder;
+            }
+        }
+        customWeights = newWeights;
+        window.renderCustomSliders();
+    };
+
+    window.renderCustomSliders = function() {
+        let container = document.getElementById('custom-sliders-container');
+        let keys = Object.keys(customWeights);
+        if (keys.length < 2) {
+            container.innerHTML = '';
+            return;
+        }
+        let html = '<hr style="border:0; border-top:1px dashed #ddd; margin:20px 0;"><p style="text-align:center;font-weight:bold;margin-top:0;">'+(currentLang==='ko'?'시제 출제 확률 설정 :':'Réglez les probabilités :')+'</p>';
+        keys.forEach(k => {
+            let dispName = currentLang === 'ko' ? tenseMap[k].ko : k;
+            html += `
+            <div style="margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; font-size:0.95rem; font-weight:bold; margin-bottom:5px; color:var(--dark);">
+                    <span>${dispName}</span>
+                    <span id="val-${k.replace(/\s/g,'')}">${customWeights[k]}%</span>
+                </div>
+                <input type="range" min="0" max="100" value="${customWeights[k]}" 
+                       oninput="window.updateCustomWeight('${k}', this.value)" style="width:100%;">
+            </div>
+            `;
+        });
+        container.innerHTML = html;
+    };
+
+    window.updateCustomWeight = function(changedTense, newValue) {
+        newValue = parseInt(newValue);
+        let others = Object.keys(customWeights).filter(k => k !== changedTense);
+        let oldSumOthers = others.reduce((a,b) => a + customWeights[b], 0);
+        
+        customWeights[changedTense] = newValue;
+        let targetSumOthers = 100 - newValue;
+
+        // Répartition de la différence sur les autres sliders
+        if (others.length > 0) {
+            if (oldSumOthers === 0) {
+                let share = targetSumOthers / others.length;
+                others.forEach(k => customWeights[k] = share);
+            } else {
+                others.forEach(k => {
+                    customWeights[k] = (customWeights[k] / oldSumOthers) * targetSumOthers;
+                });
+            }
+        }
+
+        // Arrondi pour affichage propre
+        let finalWeights = {};
+        let currentTotal = 0;
+        Object.keys(customWeights).forEach(k => {
+            finalWeights[k] = Math.round(customWeights[k]);
+            currentTotal += finalWeights[k];
+        });
+
+        // Compensation du reste à 100% à cause de l'arrondi
+        let diff = 100 - currentTotal;
+        if (diff !== 0 && others.length > 0) {
+            finalWeights[others[0]] += diff;
+        }
+
+        customWeights = finalWeights;
+        
+        // Mise à jour visuelle des sliders sans recharger l'HTML
+        Object.keys(customWeights).forEach(k => {
+            let safeKey = k.replace(/\s/g,'');
+            let slider = document.querySelector(`input[oninput*="'${k}'"]`);
+            let label = document.getElementById(`val-${safeKey}`);
+            if (slider && label) {
+                slider.value = customWeights[k];
+                label.innerText = customWeights[k] + '%';
+            }
+        });
+    };
+
+    window.confirmCustomTenses = function() {
+        selectedTenses = Object.keys(customWeights);
         if (selectedTenses.length === 0) {
             alert(currentLang === 'ko' ? "최소 하나의 시제를 선택해주세요." : "Veuillez choisir au moins un temps.");
             return;
@@ -505,6 +611,7 @@
         }
 
         score = 0; total = 0; mistakeTracker = [];
+        playedVerbs = []; // Réinitialisation de l'historique anti-répétition pour la nouvelle partie
         
         if(gameMode === 'classic') {
             document.getElementById('save-score-section').style.display = "none";
@@ -551,66 +658,77 @@
         while(!valid && failSafe < 1000) {
             failSafe++;
             
-            // Si on est en "Tous les verbes" ou en "Mode Personnalisé", on pioche dans toute la base sans restriction de niveau
-            if (gameMode === 'time-attack-weighted' || selectedLevel === 'Custom') {
-                let tempV = fullDatabase[Math.floor(Math.random() * fullDatabase.length)];
-                if (!tempV.conjugaisons) continue;
-                let possibleTenses = Object.keys(tempV.conjugaisons).filter(t => selectedTenses.includes(t));
-                if (possibleTenses.length > 0) {
-                    currentV = tempV;
-                    currentTense = possibleTenses[Math.floor(Math.random() * possibleTenses.length)];
-                    valid = true;
+            let tempTense;
+            let validVerbs = [];
+
+            // 1. Détermination du temps selon le mode
+            if (gameMode === 'time-attack-weighted') {
+                tempTense = selectedTenses[Math.floor(Math.random() * selectedTenses.length)];
+                validVerbs = fullDatabase.filter(v => v.conjugaisons && v.conjugaisons[tempTense]);
+            } 
+            else if (selectedLevel === 'Custom') {
+                let tenses = Object.keys(customWeights);
+                if (tenses.length === 0) break;
+                let weights = Object.values(customWeights);
+                let rand = Math.random() * 100;
+                let sum = 0;
+                tempTense = tenses[0];
+                for(let i=0; i<tenses.length; i++) {
+                    sum += weights[i];
+                    if(rand <= sum) { tempTense = tenses[i]; break; }
                 }
-                continue;
-            }
-
-            // --- Logique Standard selon le niveau (A1, A2, B1, B2) ---
-            let config = levelConfigs[selectedLevel];
-            let allowedLevels = levelsAllowed[selectedLevel];
-
-            // 1. Détermination du temps avec les probabilités (ex: A2 = 20% présent, 30% Imparfait...)
-            let tenses = Object.keys(config.tenses);
-            let weights = Object.values(config.tenses);
-            let totalWeight = weights.reduce((a,b) => a+b, 0);
-            let rand = Math.random() * totalWeight;
-            let tempTense = tenses[0];
-            let sum = 0;
-            for(let i=0; i<tenses.length; i++) {
-                sum += weights[i];
-                if(rand <= sum) { tempTense = tenses[i]; break; }
-            }
-
-            // 2. Filtres stricts de verbes
-            let validVerbs = fullDatabase.filter(v => {
-                if (!v.niveau || !allowedLevels.includes(v.niveau)) return false;
-                if (!v.conjugaisons || !v.conjugaisons[tempTense]) return false;
-                
-                // Règle de politesse (Conditionnel A2 uniquement)
-                if (selectedLevel === "A2" && tempTense === "Conditionnel présent") {
-                    if (!config.politesse.includes(v.verbe.toLowerCase())) return false;
+                validVerbs = fullDatabase.filter(v => v.conjugaisons && v.conjugaisons[tempTense]);
+            } 
+            else {
+                let config = levelConfigs[selectedLevel];
+                let allowedLevels = levelsAllowed[selectedLevel];
+                let tenses = Object.keys(config.tenses);
+                let weights = Object.values(config.tenses);
+                let rand = Math.random() * weights.reduce((a,b)=>a+b, 0);
+                let sum = 0;
+                tempTense = tenses[0];
+                for(let i=0; i<tenses.length; i++) {
+                    sum += weights[i];
+                    if(rand <= sum) { tempTense = tenses[i]; break; }
                 }
-                return true;
-            });
 
-            // 3. Règle du 50/50 pour le niveau A1 (liste stricte vs réguliers)
-            if (selectedLevel === "A1" && validVerbs.length > 0) {
-                let wantIrregular = Math.random() < 0.5;
-                let filteredA1 = validVerbs.filter(v => {
-                    let isIrreg = config.irreguliers.includes(v.verbe.toLowerCase());
-                    return isIrreg === wantIrregular;
+                validVerbs = fullDatabase.filter(v => {
+                    if (!v.niveau || !allowedLevels.includes(v.niveau)) return false;
+                    if (!v.conjugaisons || !v.conjugaisons[tempTense]) return false;
+                    if (selectedLevel === "A2" && tempTense === "Conditionnel présent") {
+                        if (!config.politesse.includes(v.verbe.toLowerCase())) return false;
+                    }
+                    return true;
                 });
-                if (filteredA1.length > 0) { validVerbs = filteredA1; }
+
+                if (selectedLevel === "A1" && validVerbs.length > 0) {
+                    let wantIrregular = Math.random() < 0.5;
+                    let filteredA1 = validVerbs.filter(v => {
+                        let isIrreg = config.irreguliers.includes(v.verbe.toLowerCase());
+                        return isIrreg === wantIrregular;
+                    });
+                    if (filteredA1.length > 0) { validVerbs = filteredA1; }
+                }
             }
 
-            // 4. Choix final
+            // 2. Anti-répétition & Choix final
             if (validVerbs.length > 0) {
+                // On enlève ceux qui sont déjà tombés avec CE temps précis
+                let unplayedVerbs = validVerbs.filter(v => !playedVerbs.includes(v.verbe + '-' + tempTense));
+                
+                // Si on n'a pas encore épuisé les verbes, on se restreint à ceux pas encore joués
+                if (unplayedVerbs.length > 0) {
+                    validVerbs = unplayedVerbs;
+                }
+
                 currentV = validVerbs[Math.floor(Math.random() * validVerbs.length)];
                 currentTense = tempTense;
+                playedVerbs.push(currentV.verbe + '-' + currentTense); // On l'enregistre dans l'historique
                 valid = true;
             }
         }
         
-        // Anti-crash de sécurité extrême
+        // Sécurité anti-crash
         if(!valid) {
             currentV = fullDatabase.find(v => v.conjugaisons) || fullDatabase[0];
             currentTense = currentV.conjugaisons ? Object.keys(currentV.conjugaisons)[0] : "Présent";
@@ -742,77 +860,4 @@
                 });
             }
             html += `</table>`;
-            document.getElementById('mini-leaderboard-content').innerHTML = html;
-        });
-    };
-
-    window.loadLeaderboard = function() {
-        window.goToStep('step-leaderboard');
-        document.getElementById('leaderboard-content').innerHTML = `<p style='text-align:center; padding: 20px;'>${currentLang === 'ko' ? "챔피언 기록 불러오는 중... ⏳" : "Chargement des champions... ⏳"}</p>`;
-        database.ref('scores').once('value').then((snapshot) => {
-            firebaseScores = [];
-            snapshot.forEach((childSnapshot) => firebaseScores.push(childSnapshot.val()));
-            window.updateLeaderboardView();
-        });
-    };
-
-    window.updateLeaderboardView = function() {
-        const timeF = document.getElementById('lb-time').value;
-        const modeF = document.getElementById('lb-mode').value;
-        const levelF = document.getElementById('lb-level').value;
-        document.getElementById('lb-level').style.display = (modeF === 'time-attack-weighted') ? 'none' : 'block';
-        
-        const now = Date.now();
-        let filtered = firebaseScores.filter(s => {
-            if(s.mode !== modeF) return false;
-            if(modeF !== 'time-attack-weighted' && s.level !== levelF) return false;
-            const diff = now - s.time;
-            if(timeF === 'week' && diff > 7 * 86400000) return false;
-            if(timeF === 'month' && diff > 30 * 86400000) return false;
-            return true;
-        });
-        filtered.sort((a,b) => b.score - a.score);
-        
-        let html = `<table class="leaderboard-table"><tr><th>#</th><th>${currentLang === 'ko' ? '이름' : 'Nom'}</th><th>${currentLang === 'ko' ? '점수' : 'Score'}</th></tr>`;
-        if(filtered.length === 0) {
-            html += `<tr><td colspan="3" style="text-align:center; padding:20px;">${currentLang === 'ko' ? "이 필터에 해당하는 기록이 없습니다" : "Aucun score pour ce filtre"}</td></tr>`;
-        } else {
-            filtered.slice(0,10).forEach((s, idx) => {
-                let textScore = modeF === 'time-attack-weighted' ? `${s.score} pts` : s.score;
-                let rankEmote = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : "";
-                html += `<tr><td>${rankEmote}${idx+1}</td><td>${s.pseudo}</td><td style="font-weight:bold;">${textScore}</td></tr>`;
-            });
-        }
-        html += `</table>`;
-        document.getElementById('leaderboard-content').innerHTML = html;
-    };
-
-    window.insertChar = function(char) {
-        const input = document.getElementById('answer-input');
-        input.value += char; input.focus();
-    };
-
-    window.sendKakao = function() {
-        let userComment = document.getElementById('user-comment').value;
-        let modeKo = gameMode === 'classic' ? '기본 연습' : gameMode === 'sudden-death' ? '서든 데스' : gameMode === 'time-attack' ? '타임 어택' : '타임 어택 (모든 동사)';
-        let modeFr = gameMode === 'classic' ? 'Classique' : gameMode === 'sudden-death' ? 'Mort Subite' : gameMode === 'time-attack' ? 'Time Attack' : 'Time Attack (Tous les verbes)';
-        let texteMessage = currentLang === 'ko' 
-            ? `🏆 [Conju-Coach 결과]\n모드: ${modeKo}\n점수: ${score}\n시도한 동사: ${total}\n💬 메시지: ${userComment || "없음"}`
-            : `🏆 [Résultat Conju-Coach]\nMode : ${modeFr}\nScore : ${score}\nTotal tentés : ${total}\n💬 Message : ${userComment || "Aucun"}`;
-        
-        navigator.clipboard.writeText(texteMessage).then(() => {
-            alert(currentLang === 'ko' ? "결과가 복사되었습니다! 카카오톡을 열고 마튜 쌤에게 붙여넣기 해주세요 💛" : "Résultat copié ! Tu peux le coller dans ton KakaoTalk pour Matthieu 💛");
-        });
-    };
-
-    fetch('verbes.json').then(res => res.json()).then(data => { fullDatabase = data; });
-
-    document.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            const active = document.querySelector('.step.active');
-            if(active && active.id === 'step-game') window.checkAnswer();
-        }
-    });
-</script>
-</body>
-</html>
+            document.getElementById('mini-leaderboa
