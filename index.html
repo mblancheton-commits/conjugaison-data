@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conju-Coach DELF</title>
+    <title>Conju-Coach DELF Pro</title>
     <!-- On importe Firebase et Analytics -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -36,7 +36,7 @@
         .leaderboard-table tr:nth-child(2) { font-weight: bold; color: #7f8c8d; background: #fdfdfd; }
         .leaderboard-table tr:nth-child(3) { font-weight: bold; color: #b87333; background: #fcf9f2; }
 
-        /* Styles Jeu - Inversion Hiérarchique de la taille des textes */
+        /* Styles Jeu */
         .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; position: relative; }
         #verb-name { font-size: 1.8rem; font-weight: bold; color: var(--primary); text-transform: uppercase; }
         #verb-traduction { font-size: 0.95rem; color: #7f8c8d; display: block; margin-bottom: 10px; font-style: italic; font-weight: normal; }
@@ -193,12 +193,12 @@
     <!-- RÉSULTATS -->
     <div id="step-results" class="step">
         <div class="results-header" style="text-align:center;">
-            <div class="score-big" id="final-score" style="font-size:3rem; font-weight:bold; color:var(--primary);">0 / 0</div>
+            <div class="score-big" id="final-score">0 / 0</div>
             <p id="final-percent" style="font-weight:bold; font-size:1.2rem; margin-top:5px;">-</p>
         </div>
         
         <div id="save-score-section" style="background:#fef9e7; padding:15px; border-radius:12px; margin: 10px 0; border:1px solid gold; text-align:center;">
-            <p id="label-pseudo" style="margin:0 0 10px 0; font-weight:bold;"></p>
+            <p id="label-pseudo" style="margin:0 0 10px 0; font-weight:bold;">Mémoriser mon record :</p>
             <input type="text" id="user-pseudo" maxlength="12" placeholder="Pseudo" style="padding:10px; margin-bottom:10px;">
             <button id="btn-save-score" class="btn-full" style="background:gold; color:var(--dark); margin:0;" onclick="window.saveScore()"></button>
         </div>
@@ -208,12 +208,15 @@
             <div id="mini-leaderboard-content" style="background:white; border-radius:10px; padding:10px; border:1px solid #ddd;"></div>
         </div>
 
-        <div id="mistake-container"></div>
-        
-        <div class="email-section" style="margin-top: 15px;">
+        <!-- ZONE DE PARTAGE PLACÉE AVANT LA LISTE DES FAUTES -->
+        <div class="email-section" style="margin: 10px 0;">
             <textarea id="user-comment" rows="2" style="width:100%; border-radius:8px; padding:10px; border:1px solid #ddd;"></textarea>
             <button id="btn-kakao" class="btn-full" style="background:#FEE500; color:#381E1F; margin-top:5px;" onclick="window.sendKakao()"></button>
         </div>
+
+        <!-- TABLEAU DES ERREURS PLACÉ EN BAS -->
+        <div id="mistake-container"></div>
+        
         <button id="btn-restart" class="btn-full" onclick="location.reload()">Recommencer</button>
     </div>
 </div>
@@ -268,34 +271,81 @@
 
     const i18n = {
         fr: {
-            menuClassic: "🎯 Entraînement Classique", menuChallenge: "🔥 Challenges (Défis)", menuConj: "📖 Conjugueur", menuLb: "🏆 Classements",
-            levelLabel: "Choisissez votre niveau DELF :", customBtn: "⚙️ Personnalisé", searchLabel: "📖 Conjugueur : Rechercher un verbe",
-            qtyLabel: "Combien de verbes ?", infinite: "Infini ∞", startBtn: "Commencer !",
-            checkBtn: "Vérifier", stopBtn: "Terminer", pseudoLabel: "Mémoriser mon score (Pseudo) :",
-            kakaoBtn: "💬 Partager mon résultat",
-            restartBtn: "Recommencer", successMsg: "✨ Bravo !",
-            errorMsg: "❌ Non :", statsLabel: "de réussite", verbsAttempted: "verbes tentés", reviewTitle: "Tables à réviser :",
-            perfectMsg: "Zéro faute ! 🏆", errorLabel: " <-- ERREUR", scoreSaved: "Score enregistré avec succès !", scoreError: "Erreur lors de l'enregistrement.",
+            menuClassic: "🎯 Entraînement Classique", 
+            menuChallenge: "🔥 Challenges (Défis)", 
+            menuConj: "📖 Conjugueur", 
+            menuLb: "🏆 Classements",
+            levelLabel: "Choisissez votre niveau DELF :", 
+            customBtn: "⚙️ Personnalisé", 
+            searchLabel: "📖 Conjugueur : Rechercher un verbe", 
+            qtyLabel: "Combien de verbes ?", 
+            infinite: "Infini ∞", 
+            startBtn: "Commencer !",
+            checkBtn: "Vérifier", 
+            stopBtn: "Terminer", 
+            pseudoLabel: "Mémoriser mon record (Pseudo) :",
+            kakaoBtn: "💬 Crâner auprès de Matthieu",
+            restartBtn: "Recommencer", 
+            successMsg: "✨ Bravo !",
+            errorMsg: "❌ Non :", 
+            statsLabel: "de réussite", 
+            verbsAttempted: "verbes tentés", 
+            reviewTitle: "Tables à réviser :",
+            perfectMsg: "Zéro faute ! 🏆", 
+            errorLabel: " <-- ERREUR", 
+            scoreSaved: "Score enregistré avec succès !", 
+            scoreError: "Erreur lors de l'enregistrement.",
             modeSD: "☠️ Mort Subite<br><small>1 erreur = Fini</small>",
             modeTA: "⏱️ Time Attack<br><small>60 secondes</small>",
             modeTAAll: "🌟 Time Attack (Tous les verbes)<br><small style='font-weight:normal;'>1 min - A1=1pt, A2=2pts, B1=3pts, B2=5pts</small>",
             saveScoreBtn: "💾 Enregistrer mon score",
-            lbModeSD: "Mort Subite ☠️", lbModeTA: "Time Attack ⏱️", lbModeTAAll: "Time Attack (Tous les verbes) 🌟",
-            top10Current: "🏆 Top 10 Actuel", msgPlaceholder: "Un petit message ?", chooseLevel: "Choisissez le niveau :",
+            lbTitle: "🏆 Top Scores",
+            lbModeSD: "Mort Subite ☠️", 
+            lbModeTA: "Time Attack ⏱️", 
+            lbModeTAAll: "Time Attack (Tous les verbes) 🌟",
+            top10Current: "🏆 Top 10 Actuel", 
+            msgPlaceholder: "Un petit message ?", 
+            chooseLevel: "Choisissez le niveau :",
+            searchPlaceholder: "ex: être, manger...",
             dbError: "Impossible de lancer le jeu : les verbes n'ont pas encore été chargés."
         },
         ko: {
-            menuClassic: "🎯 기본 연습", menuChallenge: "🔥 챌린지 모드", menuConj: "📖 동사 변화표", menuLead: "🏆 순위표",
-            levelLabel: "델프 레벨을 선택하세요 :", customBtn: "⚙️ 개인 설정", searchLabel: "📖 동사 변화표 검색",
-            qtyLabel: "동사 개수 :", infinite: "무한 모드 ∞", startBtn: "시작하기!",
-            checkBtn: "확인하기", stopBtn: "종료", pseudoLabel: "기록 저장하기 (닉네임):",
-            kakaoBtn: "💬 결과 공유하기 (카카오톡 등)", restartBtn: "다시 시작하기", successMsg: "✨ 잘했어요!",
-            errorMsg: "❌ 정답 :", statsLabel: "성공률", verbsAttempted: "개 동사 시도함", reviewTitle: "복습해야 할 표 :",
-            perfectMsg: "완벽해요! 🏆", errorLabel: " <-- 내 오답", scoreSaved: "성공적으로 저장되었습니다!", scoreError: "저장 중 오류가 발생했습니다.",
-            modeSD: "☠️ 서든 데스 (Sudden Death)<br><small>1번 틀리면 종료</small>", modeTA: "⏱️ 타임 어택<br><small>60초</small>",
+            menuClassic: "🎯 기본 연습", 
+            menuChallenge: "🔥 챌린지 모드", 
+            menuConj: "📖 동사 변화표", 
+            menuLb: "🏆 순위표",
+            levelLabel: "델프 레벨을 선택하세요 :", 
+            customBtn: "⚙️ 개인 설정", 
+            searchLabel: "📖 동사 변화표 검색",
+            qtyLabel: "동사 개수 :", 
+            infinite: "무한 모드 ∞", 
+            startBtn: "시작하기!",
+            checkBtn: "확인하기", 
+            stopBtn: "종료", 
+            pseudoLabel: "기록 저장하기 (닉네임):",
+            kakaoBtn: "💬 마튜한테 자랑하기", 
+            restartBtn: "다시 시작하기", 
+            successMsg: "✨ 잘했어요!",
+            errorMsg: "❌ 정답 :", 
+            statsLabel: "성공률", 
+            verbsAttempted: "개 동사 시도함", 
+            reviewTitle: "복습해야 할 표 :",
+            perfectMsg: "완벽해요! 🏆", 
+            errorLabel: " <-- 내 오답", 
+            scoreSaved: "성공적으로 저장되었습니다!", 
+            scoreError: "저장 중 오류가 발생했습니다.",
+            modeSD: "☠️ 서든 데스 (Sudden Death)<br><small>1번 틀리면 종료</small>", 
+            modeTA: "⏱️ 타임 어택<br><small>60초</small>",
             modeTAAll: "🌟 타임 어택 (모든 동사)<br><small style='font-weight:normal;'>1분 - A1=1점, A2=2점, B1=3점, B2=5점</small>",
-            saveScoreBtn: "💾 내 점수 저장하기", lbModeSD: "서든 데스 ☠️", lbModeTA: "타임 어택 ⏱️", lbModeTAAll: "타임 어택 (모든 동사) 🌟",
-            top10Current: "🏆 현재 Top 10", msgPlaceholder: "간단한 메시지를 남겨주세요", chooseLevel: "레벨을 선택하세요 :",
+            saveScoreBtn: "💾 내 점수 저장하기", 
+            lbTitle: "🏆 순위표",
+            lbModeSD: "서든 데스 ☠️", 
+            lbModeTA: "타임 어택 ⏱️", 
+            lbModeTAAll: "타임 어택 (모든 동사) 🌟",
+            top10Current: "🏆 현재 Top 10", 
+            msgPlaceholder: "간단한 메시지를 남겨주세요", 
+            chooseLevel: "레벨을 선택하세요 :",
+            searchPlaceholder: "동사를 입력하세요...",
             dbError: "동사 데이터를 불러올 수 없어 게임을 시작할 수 없습니다."
         }
     };
@@ -340,33 +390,36 @@
 
     // --- NAVIGATION & INIT ---
     window.setLang = function(l) {
-        currentLang = l; const text = i18n[l];
-        document.getElementById('btn-menu-classic').innerText = text.menuClassic;
-        document.getElementById('btn-menu-challenge').innerText = text.menuChallenge;
-        document.getElementById('btn-menu-conj').innerText = text.menuConj;
-        document.getElementById('btn-menu-lb').innerText = text.menuLead;
-        document.getElementById('label-level').innerText = text.levelLabel;
-        document.getElementById('btn-custom-trigger').innerText = text.customBtn;
-        document.getElementById('label-search').innerText = text.searchLabel;
-        document.getElementById('label-quantity').innerText = text.qtyLabel;
-        document.getElementById('btn-infinite').innerText = text.infinite;
-        document.getElementById('btn-start').innerText = text.startBtn;
-        document.getElementById('btn-submit').innerText = text.checkBtn;
-        document.getElementById('btn-stop-infinite').innerText = text.stopBtn;
-        document.getElementById('btn-kakao').innerText = text.kakaoBtn;
-        document.getElementById('btn-restart').innerText = text.restartBtn;
-        document.getElementById('label-pseudo').innerText = text.pseudoLabel;
+        currentLang = l; const t = i18n[l];
+        document.getElementById('btn-menu-classic').innerText = t.menuClassic;
+        document.getElementById('btn-menu-challenge').innerText = t.menuChallenge;
+        document.getElementById('btn-menu-conj').innerText = t.menuConj;
+        document.getElementById('btn-menu-lb').innerText = t.menuLb;
+        document.getElementById('label-level').innerText = t.levelLabel;
+        document.getElementById('btn-custom-trigger').innerText = t.customBtn;
+        document.getElementById('label-search').innerText = t.searchLabel;
+        document.getElementById('search-input').placeholder = t.searchPlaceholder;
+        document.getElementById('label-quantity').innerText = t.qtyLabel;
+        document.getElementById('btn-infinite').innerText = t.infinite;
+        document.getElementById('btn-start').innerText = t.startBtn;
+        document.getElementById('btn-submit').innerText = t.checkBtn;
+        document.getElementById('btn-stop-infinite').innerText = t.stopBtn;
+        document.getElementById('btn-kakao').innerText = t.kakaoBtn;
+        document.getElementById('btn-restart').innerText = t.restartBtn;
+        document.getElementById('label-pseudo').innerText = t.pseudoLabel;
         
-        document.getElementById('btn-mode-sd').innerHTML = text.modeSD;
-        document.getElementById('btn-mode-ta').innerHTML = text.modeTA;
-        document.getElementById('btn-mode-ta-all').innerHTML = text.modeTAAll;
-        document.getElementById('btn-save-score').innerHTML = text.saveScoreBtn;
-        document.getElementById('opt-mode-sd').innerText = text.lbModeSD;
-        document.getElementById('opt-mode-ta').innerText = text.lbModeTA;
-        document.getElementById('opt-mode-ta-all').innerText = text.lbModeTAAll;
-        document.getElementById('label-top10').innerText = text.top10Current;
-        document.getElementById('user-comment').placeholder = text.msgPlaceholder;
-        document.getElementById('label-challenge-lvl').innerText = text.chooseLevel;
+        document.getElementById('btn-mode-sd').innerHTML = t.modeSD;
+        document.getElementById('btn-mode-ta').innerHTML = t.modeTA;
+        document.getElementById('btn-mode-ta-all').innerHTML = t.modeTAAll;
+        document.getElementById('btn-save-score').innerHTML = t.saveScoreBtn;
+        document.getElementById('opt-mode-sd').innerText = t.lbModeSD;
+        document.getElementById('opt-mode-ta').innerText = t.lbModeTA;
+        document.getElementById('opt-mode-ta-all').innerText = t.lbModeTAAll;
+        document.getElementById('label-top10').innerText = t.top10Current;
+        document.getElementById('user-comment').placeholder = t.msgPlaceholder;
+        document.getElementById('label-challenge-lvl').innerText = t.chooseLevel;
+        document.getElementById('label-lb-title').innerText = t.lbTitle;
+        
         window.goToStep('step-main-menu');
     };
 
@@ -607,15 +660,27 @@
         }
     };
 
-    // --- PARTAGE (BULLETPROOF AVEC FALLBACK INTÉGRÉ) ---
+    // --- PARTAGE DÉTAILLÉ AVEC LE SUJET ET LE VERBE FAUX ---
     window.sendKakao = function() {
         let modeKo = gameMode === 'classic' ? '기본 연습' : gameMode === 'sudden-death' ? '서든 데스' : gameMode === 'time-attack' ? '타임 어택' : '타임 어택 (모든 동사)';
         let modeFr = gameMode === 'classic' ? 'Classique' : gameMode === 'sudden-death' ? 'Mort Subite' : gameMode === 'time-attack' ? 'Time Attack' : 'Time Attack (Tous les verbes)';
         let userComment = document.getElementById('user-comment').value;
+        let lvlDisplay = selectedLevel === 'all' ? 'Tous / 전체' : selectedLevel;
 
         let texteMessage = currentLang === 'ko' 
-            ? `🏆 [Conju-Coach 결과]\n모드: ${modeKo}\n점수: ${score}\n시도한 동사: ${total}\n💬 메시지: ${userComment || "없음"}`
-            : `🏆 [Résultat Conju-Coach]\nMode : ${modeFr}\nScore : ${score}\nTotal tentés : ${total}\n💬 Message : ${userComment || "Aucun"}`;
+            ? `🏆 [Conju-Coach 결과]\n• 모드: ${modeKo}\n• 레벨: ${lvlDisplay}\n• 점수: ${score}\n• 시도한 동사: ${total}\n💬 메시지: ${userComment || "없음"}\n`
+            : `🏆 [Résultat Conju-Coach]\n• Mode : ${modeFr}\n• Niveau : ${lvlDisplay}\n• Score : ${score}\n• Total tentés : ${total}\n💬 Message : ${userComment || "Aucun"}\n`;
+
+        if (mistakeTracker.length > 0) {
+            texteMessage += currentLang === 'ko' ? `\n❌ 틀린 동사 복습 :\n` : `\n❌ Erreurs à réviser :\n`;
+            mistakeTracker.forEach(m => {
+                const pron = window.getPronoun(m.errorIdx, m.verb.conjugaisons[m.tense][m.errorIdx], m.tense).trim();
+                const sol = m.verb.conjugaisons[m.tense][m.errorIdx];
+                texteMessage += `- ${m.verb.verbe.toUpperCase()} (${m.tense}) -> ${pron} ${sol}\n`;
+            });
+        } else {
+            texteMessage += currentLang === 'ko' ? `\n🏆 오답 없음! 완벽해요!` : `\n🏆 Zéro faute ! Parfait !`;
+        }
 
         if (navigator.share) {
             navigator.share({
@@ -648,7 +713,7 @@
         document.body.removeChild(textArea);
     }
 
-    // --- LEADERBOARD & RÉSULTATS ---
+    // --- FIREBASE SAVE & LOAD ---
     window.saveScore = function() {
         const pseudo = document.getElementById('user-pseudo').value.trim();
         if(!pseudo) return alert(currentLang === 'ko' ? "닉네임을 입력해주세요!" : "Indique un pseudo !");
@@ -736,7 +801,7 @@
         document.getElementById('leaderboard-content').innerHTML = html;
     };
 
-    // --- SLIDERS CUSTOM ---
+    // --- CUSTOM SLIDERS ---
     window.openCustomMode = function() {
         selectedLevel = 'Custom';
         customWeights = {};
@@ -855,8 +920,7 @@
 
     window.showConjugation = function(v) {
         const resultsBox = document.getElementById('conj-results');
-        let html = `<h2 style="color:var(--primary); text-align:center; text-transform:uppercase;">${v.verbe}</h2>`;
-        if(v.traduction) html += `<p style="text-align:center; margin-top:-10px; color:#7f8c8d;">${v.traduction}</p>`;
+        let html = `<h2>${v.verbe.toUpperCase()}</h2>`;
         Object.keys(v.conjugaisons).forEach(tense => {
             html += `<div class="review-block"><h3>${currentLang === 'ko' ? tenseMap[tense].ko : tense}</h3><table class="review-table">`;
             v.conjugaisons[tense].forEach((conj, idx) => {
