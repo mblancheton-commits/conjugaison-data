@@ -4,30 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conju-Coach DELF Pro</title>
-    
-    <!-- Firebase SDK Compat -->
+    <!-- On importe Firebase et Analytics -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
-
     <style>
-        :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; --warning: #f39c12; --gold: #f1c40f; }
+        :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; --warning: #f39c12; }
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--dark); }
-        .app-container { background: white; width: 95%; max-width: 550px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 550px; display: flex; flex-direction: column; margin: 20px 0; position: relative; }
-        
+        .app-container { background: white; width: 95%; max-width: 550px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 550px; display: flex; flex-direction: column; margin: 20px 0; }
         h1 { text-align: center; font-size: 1.5rem; margin-top: 0; }
         .step { display: none; flex-direction: column; gap: 15px; animation: fadeIn 0.3s; }
         .step.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-choice { padding: 15px; border: 2px solid #ddd; border-radius: 12px; background: white; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 0 #eee; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .btn-choice:active { transform: translateY(2px); box-shadow: 0 2px 0 #eee; }
         .btn-choice.selected { background: var(--primary); color: white; border-color: var(--primary); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); transform: translateY(2px); }
         .btn-full { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--dark); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
         
-        /* Cartes Verbes */
+        /* Styles Sliders Personnalisés */
+        input[type="range"] { accent-color: var(--primary); cursor: pointer; }
+        
+        /* Styles Classement & Filtres */
+        .filter-group { display: flex; gap: 5px; margin-bottom: 10px; }
+        .filter-group select { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; background: #fafafa; }
+        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
+        .leaderboard-table th { background: var(--primary); color: white; padding: 10px; text-align: left; }
+        .leaderboard-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        .leaderboard-table tr:nth-child(1) { font-weight: bold; color: #d35400; background: #fffdf0; }
+        .leaderboard-table tr:nth-child(2) { font-weight: bold; color: #7f8c8d; background: #fdfdfd; }
+        .leaderboard-table tr:nth-child(3) { font-weight: bold; color: #b87333; background: #fcf9f2; }
+
+        /* Styles Jeu */
         .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; position: relative; }
         #verb-name { font-size: 1.8rem; font-weight: bold; color: var(--primary); text-transform: uppercase; }
         #verb-traduction { font-size: 0.95rem; color: #7f8c8d; display: block; margin-bottom: 10px; font-style: italic; font-weight: normal; }
@@ -35,7 +44,7 @@
         #pronoun { font-size: 1.4rem; font-weight: bold; margin: 10px 0; }
         #game-timer { font-size: 1.8rem; font-weight: bold; color: var(--error); text-align: center; margin-bottom: 5px; display: none; }
         
-        input[type="text"], input[type="number"], textarea { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; text-align: center; outline: none; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; text-align: center; outline: none; }
         .keyboard { display: flex; justify-content: center; gap: 5px; margin: 10px 0; flex-wrap: wrap; }
         .key { background: white; border: 1px solid #ddd; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1rem; box-shadow: 0 2px 0 #ccc; }
         
@@ -43,11 +52,6 @@
         .review-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
         .review-table td { padding: 8px; border-bottom: 1px solid #f0f0f0; }
         .error-row { background: #fff0f0; color: var(--error); font-weight: bold; }
-        
-        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .leaderboard-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
-        
-        input[type="range"] { width: 100%; accent-color: var(--primary); margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -103,7 +107,7 @@
                 <button class="btn-choice" onclick="window.startChallengeGame('B2')">B2</button>
             </div>
         </div>
-        <button class="btn-full" style="background:#95a5a6; margin-top:10px;" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
+        <button class="btn-full" style="background:#95a5a6" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
     </div>
 
     <!-- 4. CUSTOM -->
@@ -181,24 +185,24 @@
             <p id="final-percent" style="font-weight:bold; font-size:1.2rem; margin-top:5px;">-</p>
         </div>
         
-        <div id="save-score-section" style="background:#fff9c4; padding:15px; border-radius:12px; border:1px solid #fbc02d; text-align:center; margin-bottom:15px;">
-            <p id="label-pseudo" style="margin-bottom:10px; font-weight:bold"></p>
-            <input type="text" id="user-pseudo" maxlength="12">
-            <button id="btn-save-score" class="btn-full" style="background:#fbc02d; color:#000;" onclick="window.saveScore()"></button>
+        <div id="save-score-section" style="background:#fef9e7; padding:15px; border-radius:12px; margin: 10px 0; border:1px solid gold; text-align:center;">
+            <p id="label-pseudo" style="margin:0 0 10px 0; font-weight:bold;"></p>
+            <input type="text" id="user-pseudo" maxlength="12" placeholder="Pseudo" style="padding:10px; margin-bottom:10px;">
+            <button id="btn-save-score" class="btn-full" style="background:gold; color:var(--dark); margin:0;" onclick="window.saveScore()"></button>
         </div>
 
         <div id="results-leaderboard" style="display:none; margin: 15px 0;">
             <h3 id="label-top10" style="text-align:center; margin-bottom:10px;">🏆 Top 10 Actuel</h3>
-            <div id="mini-leaderboard-content"></div>
+            <div id="mini-leaderboard-content" style="background:white; border-radius:10px; padding:10px; border:1px solid #ddd;"></div>
         </div>
 
-        <!-- ZONE DE PARTAGE -->
+        <!-- ZONE DE PARTAGE PLACÉE AVANT LA LISTE DES FAUTES -->
         <div class="email-section" style="margin: 10px 0;">
             <textarea id="user-comment" rows="2" style="width:100%; border-radius:8px; padding:10px; border:1px solid #ddd;"></textarea>
             <button id="btn-kakao" class="btn-full" style="background:#FEE500; color:#381E1F; margin-top:5px;" onclick="window.sendKakao()"></button>
         </div>
 
-        <!-- LISTE DES ERREURS -->
+        <!-- MISTAKES EN BAS -->
         <div id="mistake-container"></div>
         
         <button id="btn-restart" class="btn-full" onclick="location.reload()">Recommencer</button>
@@ -215,7 +219,7 @@
 </div>
 
 <script>
-    // --- CONFIGURATION FIREBASE ---
+    // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
         apiKey: "AIzaSyAG9xp3A4pdA-Cbt1qh8uM4tfC7f_1-MXY",
         authDomain: "conjugueur-72dd9.firebaseapp.com",
@@ -231,18 +235,22 @@
     const database = firebase.database();
     const analytics = firebase.analytics();
 
-    // --- VARIABLES ---
+    // --- VARIABLES GLOBALES ---
     let currentLang = 'fr';
     let fullDatabase = [];
     let currentV, currentTense, currentPIdx;
+    
     let score = 0, total = 0, targetNb = 10;
     let selectedLevel = 'A1';
     let selectedTenses = [];
     let customWeights = {}; 
     let playedVerbs = []; 
     let mistakeTracker = [];
+    
+    let gameMode = 'classic';
     let timerInterval;
     let timeLeft = 0;
+
     let firebaseScores = [];
 
     const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
@@ -306,7 +314,7 @@
             menuClassic: "🎯 기본 연습", 
             menuChallenge: "🔥 챌린지 모드", 
             menuConj: "📖 동사 변화표", 
-            menuLead: "🏆 순위표",
+            menuLb: "🏆 순위표",
             levelLabel: "델프 레벨을 선택하세요 :", 
             customBtn: "⚙️ 개인 설정", 
             searchLabel: "📖 동사 변화표 검색",
@@ -415,7 +423,7 @@
         document.getElementById('label-challenge-lvl').innerText = text.chooseLevel;
         document.getElementById('label-lb-title').innerText = text.lbTitle;
 
-        // Traduction des options temporelles du classement
+        // Traduction des options temporelles du classement (CORRIGÉ !)
         document.getElementById('opt-time-week').innerText = text.timeWeek;
         document.getElementById('opt-time-month').innerText = text.timeMonth;
         document.getElementById('opt-time-all').innerText = text.timeAll;
@@ -630,7 +638,6 @@
     };
 
     window.showResults = function() {
-        if(timerInterval) clearInterval(timerInterval);
         window.goToStep('step-results');
         const successRate = total > 0 ? Math.round((score / total) * 100) : 0;
 
