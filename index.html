@@ -1,222 +1,3 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conju-Coach DELF</title>
-    <!-- On importe Firebase et Analytics -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
-    <style>
-        :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; --warning: #f39c12; }
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--dark); }
-        .app-container { background: white; width: 95%; max-width: 550px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 550px; display: flex; flex-direction: column; margin: 20px 0; }
-        h1 { text-align: center; font-size: 1.5rem; margin-top: 0; }
-        .step { display: none; flex-direction: column; gap: 15px; animation: fadeIn 0.3s; }
-        .step.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-choice { padding: 15px; border: 2px solid #ddd; border-radius: 12px; background: white; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 0 #eee; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .btn-choice:active { transform: translateY(2px); box-shadow: 0 2px 0 #eee; }
-        .btn-choice.selected { background: var(--primary); color: white; border-color: var(--primary); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); transform: translateY(2px); }
-        .btn-full { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--dark); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
-        
-        /* Styles Classement & Filtres */
-        .filter-group { display: flex; gap: 5px; margin-bottom: 10px; }
-        .filter-group select { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; background: #fafafa; }
-        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
-        .leaderboard-table th { background: var(--primary); color: white; padding: 10px; text-align: left; }
-        .leaderboard-table td { padding: 10px; border-bottom: 1px solid #eee; }
-        .leaderboard-table tr:nth-child(1) { font-weight: bold; color: #d35400; background: #fffdf0; }
-        .leaderboard-table tr:nth-child(2) { font-weight: bold; color: #7f8c8d; background: #fdfdfd; }
-        .leaderboard-table tr:nth-child(3) { font-weight: bold; color: #b87333; background: #fcf9f2; }
-
-        /* Styles Jeu */
-        .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; position: relative; }
-        #verb-name { font-size: 1.8rem; font-weight: bold; color: var(--primary); text-transform: uppercase; }
-        #verb-traduction { font-size: 1.1rem; color: var(--dark); display: block; margin-top: 5px; font-weight: normal; }
-        #pronoun { font-size: 1.4rem; font-weight: bold; margin: 10px 0; }
-        #game-timer { font-size: 1.8rem; font-weight: bold; color: var(--error); text-align: center; margin-bottom: 5px; display: none; }
-        
-        input { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; text-align: center; outline: none; }
-        .keyboard { display: flex; justify-content: center; gap: 5px; margin: 10px 0; flex-wrap: wrap; }
-        .key { background: white; border: 1px solid #ddd; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1rem; box-shadow: 0 2px 0 #ccc; }
-        
-        .review-block { background: #fff; border: 1px solid #ddd; border-radius: 12px; margin-bottom: 25px; padding: 15px; }
-        .review-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-        .review-table td { padding: 8px; border-bottom: 1px solid #f0f0f0; }
-        .error-row { background: #fff0f0; color: var(--error); font-weight: bold; }
-    </style>
-</head>
-<body>
-
-<div class="app-container">
-    <h1 id="main-title">Conju-Coach ✍️</h1>
-
-    <!-- 0. LANGUE -->
-    <div id="step-lang" class="step active">
-        <p style="text-align:center; font-weight:bold;">Choisissez votre langue<br>언어를 선택하세요</p>
-        <div class="btn-grid">
-            <button class="btn-choice" onclick="window.setLang('fr')">Français 🇫🇷</button>
-            <button class="btn-choice" onclick="window.setLang('ko')">한국어 🇰🇷</button>
-        </div>
-    </div>
-
-    <!-- 1. MENU PRINCIPAL -->
-    <div id="step-main-menu" class="step">
-        <button id="btn-menu-classic" class="btn-full" style="background:var(--primary)" onclick="window.goToStep('step-level')">🎯 Entraînement Classique</button>
-        <button id="btn-menu-challenge" class="btn-full" style="background:var(--warning)" onclick="window.goToStep('step-challenges')">🔥 Challenges (Défis)</button>
-        <button id="btn-menu-conj" class="btn-full" style="background:#34495e" onclick="window.goToStep('step-conj')">📖 Conjugueur</button>
-        <button id="btn-menu-lb" class="btn-full" style="background:var(--secondary)" onclick="window.loadLeaderboard()">🏆 Classements</button>
-    </div>
-
-    <!-- 2. CHOIX NIVEAU CLASSIQUE -->
-    <div id="step-level" class="step">
-        <h2 id="label-level" style="text-align:center; margin:0;">-</h2>
-        <div class="btn-grid">
-            <button class="btn-choice" onclick="window.selectLevel('A1')">A1</button>
-            <button class="btn-choice" onclick="window.selectLevel('A2')">A2</button>
-            <button class="btn-choice" onclick="window.selectLevel('B1')">B1</button>
-            <button class="btn-choice" onclick="window.selectLevel('B2')">B2</button>
-        </div>
-        <button id="btn-custom-trigger" class="btn-choice" style="width:100%; margin-top:10px;" onclick="window.goToStep('step-custom')">-</button>
-        <button class="btn-full" style="background:#95a5a6; margin-top:20px;" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
-    </div>
-
-    <!-- 3. MENU CHALLENGES -->
-    <div id="step-challenges" class="step">
-        <h2 style="text-align:center; margin:0;">🔥 Modes de Jeu</h2>
-        <div class="btn-grid">
-            <button id="btn-mode-sd" class="btn-choice challenge-btn" onclick="window.selectChallengeMode('sudden-death', this)">☠️ Mort Subite<br><small>1 erreur = Fini</small></button>
-            <button id="btn-mode-ta" class="btn-choice challenge-btn" onclick="window.selectChallengeMode('time-attack', this)">⏱️ Time Attack<br><small>60 secondes</small></button>
-        </div>
-        <button id="btn-mode-ta-all" class="btn-choice challenge-btn" style="width:100%; margin-top:10px; background:#fef9e7; border-color:gold;" onclick="window.startWeightedChallenge()">
-            🌟 Time Attack (Tous les verbes)<br>
-            <small style="font-weight:normal;">1 min - A1=1pt, A2=2pts, B1=3pts, B2=5pts</small>
-        </button>
-        
-        <div id="challenge-level-select" style="display:none; margin-top:15px; border-top:2px dashed #ddd; padding-top:15px;">
-            <p id="label-challenge-lvl" style="text-align:center; font-weight:bold; margin-top:0;">Choisissez le niveau :</p>
-            <div class="btn-grid">
-                <button class="btn-choice" onclick="window.startChallengeGame('A1')">A1</button>
-                <button class="btn-choice" onclick="window.startChallengeGame('A2')">A2</button>
-                <button class="btn-choice" onclick="window.startChallengeGame('B1')">B1</button>
-                <button class="btn-choice" onclick="window.startChallengeGame('B2')">B2</button>
-            </div>
-        </div>
-        <button class="btn-full" style="background:#95a5a6; margin-top:10px;" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
-    </div>
-
-    <!-- CLASSEMENT -->
-    <div id="step-leaderboard" class="step">
-        <h2 id="label-lb-title" style="text-align:center; margin:0;">🏆 Top Scores</h2>
-        
-        <!-- Filtres -->
-        <div class="filter-group">
-            <select id="lb-time" onchange="window.updateLeaderboardView()">
-                <option value="week">Semaine (주)</option>
-                <option value="month">Mois (월)</option>
-                <option value="all">All-Time (전체)</option>
-            </select>
-            <select id="lb-mode" onchange="window.updateLeaderboardView()">
-                <option id="opt-mode-sd" value="sudden-death">Mort Subite ☠️</option>
-                <option id="opt-mode-ta" value="time-attack">Time Attack ⏱️</option>
-                <option id="opt-mode-ta-all" value="time-attack-weighted">Time Attack (Tous les verbes) 🌟</option>
-            </select>
-        </div>
-        <select id="lb-level" onchange="window.updateLeaderboardView()" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; font-weight:bold; margin-bottom:10px;">
-            <option value="A1">Niveau A1</option>
-            <option value="A2">Niveau A2</option>
-            <option value="B1">Niveau B1</option>
-            <option value="B2">Niveau B2</option>
-        </select>
-
-        <div id="leaderboard-content" style="min-height: 200px; overflow-y:auto;"></div>
-        <button class="btn-full" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
-    </div>
-
-    <!-- RECHERCHE / CONJUGUEUR -->
-    <div id="step-conj" class="step">
-        <p id="label-search" style="text-align:center">-</p>
-        <input type="text" id="search-input" oninput="window.updateSuggestions()" autocomplete="off">
-        <div id="suggestions" class="suggestion-list" style="background:white; border:1px solid #ddd; display:none; max-height:100px; overflow:auto;"></div>
-        <div id="conj-results" style="margin-top:20px; overflow-y: auto; max-height: 350px;"></div>
-        <button class="btn-full" style="background:#95a5a6" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
-    </div>
-
-    <!-- CUSTOM -->
-    <div id="step-custom" class="step">
-        <p id="label-tenses" style="text-align:center">-</p>
-        <div class="btn-grid" id="tense-buttons"></div>
-        <button id="btn-custom-next" class="btn-full" onclick="window.confirmCustomTenses()">-</button>
-    </div>
-
-    <!-- QUANTITÉ (Classique uniquement) -->
-    <div id="step-quantity" class="step">
-        <p id="label-quantity" style="text-align:center">-</p>
-        <input type="number" id="nb-verbes" value="10" min="1" max="50">
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button id="btn-infinite" class="btn-choice" style="flex:1" onclick="window.startClassic(999)">-</button>
-            <button id="btn-start" class="btn-full" style="flex:2; margin:0" onclick="window.startClassic()">-</button>
-        </div>
-    </div>
-
-    <!-- JEU -->
-    <div id="step-game" class="step">
-        <div id="game-progress" style="text-align: right; font-weight: bold; color: var(--primary);">0 / 10</div>
-        <div id="game-timer">⏳ 01:00</div>
-        <div class="verb-card">
-            <div id="verb-name">---</div>
-            <span id="verb-traduction"></span>
-            <div id="tense-display" style="font-style:italic; color:#666; margin-top: 5px;">-</div>
-            <div id="pronoun">---</div>
-            <input type="text" id="answer-input" autocomplete="off" spellcheck="false">
-            <div class="keyboard">
-                <button class="key" onclick="window.insertChar('é')">é</button>
-                <button class="key" onclick="window.insertChar('è')">è</button>
-                <button class="key" onclick="window.insertChar('à')">à</button>
-                <button class="key" onclick="window.insertChar('ç')">ç</button>
-                <button class="key" onclick="window.insertChar('ê')">ê</button>
-                <button class="key" onclick="window.insertChar('î')">î</button>
-            </div>
-        </div>
-        <button id="btn-submit" class="btn-full" onclick="window.checkAnswer()">Vérifier</button>
-        <button id="btn-stop-infinite" class="btn-full" style="background:#95a5a6; display:none;" onclick="window.stopGame()">Terminer</button>
-        <div id="feedback" style="text-align:center; font-weight:bold; min-height:40px; margin-top:15px;"></div>
-    </div>
-
-    <!-- RÉSULTATS -->
-    <div id="step-results" class="step">
-        <div class="results-header" style="text-align:center;">
-            <div class="score-big" id="final-score" style="font-size:3rem; font-weight:bold; color:var(--primary);">0 / 0</div>
-            <p id="final-percent" style="font-weight:bold; font-size:1.2rem; margin-top:5px;">-</p>
-        </div>
-        
-        <div id="save-score-section" style="background:#fef9e7; padding:15px; border-radius:12px; margin: 10px 0; border:1px solid gold; text-align:center;">
-            <p id="label-pseudo" style="margin:0 0 10px 0; font-weight:bold;">Mémoriser mon record :</p>
-            <input type="text" id="user-pseudo" maxlength="12" placeholder="Pseudo" style="padding:10px; margin-bottom:10px;">
-            <button id="btn-save-score" class="btn-full" style="background:gold; color:var(--dark); margin:0;" onclick="window.saveScore()">💾 Enregistrer mon score</button>
-        </div>
-
-        <!-- Classement Mini sur la page des résultats -->
-        <div id="results-leaderboard" style="display:none; margin: 15px 0;">
-            <h3 id="label-top10" style="text-align:center; margin-bottom:10px;">🏆 Top 10 Actuel</h3>
-            <div id="mini-leaderboard-content" style="background:white; border-radius:10px; padding:10px; border:1px solid #ddd;"></div>
-        </div>
-
-        <div id="mistake-container"></div>
-        
-        <div class="email-section" style="margin-top: 15px;">
-            <textarea id="user-comment" rows="2" placeholder="Un petit message ?" style="width:100%; border-radius:8px; padding:10px; border:1px solid #ddd;"></textarea>
-            <!-- Bouton Kakao aux couleurs officielles KakaoTalk -->
-            <button id="btn-kakao" class="btn-full" style="background:#FEE500; color:#381E1F; margin-top:5px;" onclick="window.sendKakao()">💬 Crâner auprès de Matthieu</button>
-        </div>
-        <button id="btn-restart" class="btn-full" onclick="location.reload()">Recommencer</button>
-    </div>
-</div>
-
 <script>
     // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
@@ -230,7 +11,6 @@
         measurementId: "G-M9QR4YRMND"
     };
 
-    // Initialisation de Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     const analytics = firebase.analytics();
@@ -278,12 +58,8 @@
             modeTA: "⏱️ Time Attack<br><small>60 secondes</small>",
             modeTAAll: "🌟 Time Attack (Tous les verbes)<br><small style='font-weight:normal;'>1 min - A1=1pt, A2=2pts, B1=3pts, B2=5pts</small>",
             saveScoreBtn: "💾 Enregistrer mon score",
-            lbModeSD: "Mort Subite ☠️",
-            lbModeTA: "Time Attack ⏱️",
-            lbModeTAAll: "Time Attack (Tous les verbes) 🌟",
-            top10Current: "🏆 Top 10 Actuel",
-            msgPlaceholder: "Un petit message ?",
-            chooseLevel: "Choisissez le niveau :",
+            lbModeSD: "Mort Subite ☠️", lbModeTA: "Time Attack ⏱️", lbModeTAAll: "Time Attack (Tous les verbes) 🌟",
+            top10Current: "🏆 Top 10 Actuel", msgPlaceholder: "Un petit message ?", chooseLevel: "Choisissez le niveau :",
             dbError: "Impossible de lancer le jeu : les verbes n'ont pas encore été chargés ou le fichier est introuvable."
         },
         ko: {
@@ -291,31 +67,66 @@
             levelLabel: "델프 레벨 :", customBtn: "⚙️ 개인 설정", searchLabel: "📖 동사 변화표 검색",
             qtyLabel: "동사 개수 :", infinite: "무한 모드 ∞", startBtn: "시작하기!",
             checkBtn: "확인하기", stopBtn: "종료", pseudoLabel: "기록 저장하기 (이름/닉네임):",
-            kakaoBtn: "💬 마튜 쌤에게 카카오톡으로 자랑하기",
-            restartBtn: "다시 시작하기", successMsg: "✨ 잘했어요!",
+            kakaoBtn: "💬 마튜 쌤에게 카카오톡으로 자랑하기", restartBtn: "다시 시작하기", successMsg: "✨ 잘했어요!",
             errorMsg: "❌ 정답 :", statsLabel: "성공률", verbsAttempted: "개 동사 시도함", reviewTitle: "복습해야 할 표 :",
             perfectMsg: "완벽해요! 🏆", errorLabel: " <-- 내 오답", scoreSaved: "성공적으로 저장되었습니다!", scoreError: "저장 중 오류가 발생했습니다.",
-            modeSD: "☠️ 서든 데스 (Sudden Death)<br><small>1번 틀리면 종료</small>",
-            modeTA: "⏱️ 타임 어택<br><small>60초</small>",
+            modeSD: "☠️ 서든 데스 (Sudden Death)<br><small>1번 틀리면 종료</small>", modeTA: "⏱️ 타임 어택<br><small>60초</small>",
             modeTAAll: "🌟 타임 어택 (모든 동사)<br><small style='font-weight:normal;'>1분 - A1=1점, A2=2점, B1=3점, B2=5점</small>",
-            saveScoreBtn: "💾 내 점수 저장하기",
-            lbModeSD: "서든 데스 ☠️",
-            lbModeTA: "타임 어택 ⏱️",
-            lbModeTAAll: "타임 어택 (모든 동사) 🌟",
-            top10Current: "🏆 현재 Top 10",
-            msgPlaceholder: "간단한 메시지를 남겨주세요",
-            chooseLevel: "레벨을 선택하세요 :",
+            saveScoreBtn: "💾 내 점수 저장하기", lbModeSD: "서든 데스 ☠️", lbModeTA: "타임 어택 ⏱️", lbModeTAAll: "타임 어택 (모든 동사) 🌟",
+            top10Current: "🏆 현재 Top 10", msgPlaceholder: "간단한 메시지를 남겨주세요", chooseLevel: "레벨을 선택하세요 :",
             dbError: "동사 데이터를 불러올 수 없어 게임을 시작할 수 없습니다. 잠시 후 다시 시도해주세요."
         }
     };
 
-    // --- NAVIGATION & INIT ---
+    // --- CONFIGURATION DES NIVEAUX (POIDS ET RESTRICTIONS) ---
+    const levelConfigs = {
+        "A1": {
+            tenses: { "Présent": 100 },
+            // Liste stricte des verbes irréguliers fondamentaux du A1
+            irreguliers: [
+                "être", "avoir", "aller", "faire", "vouloir", "pouvoir", "devoir", 
+                "savoir", "prendre", "comprendre", "apprendre", "mettre", "boire", 
+                "venir", "partir", "sortir", "dire", "lire", "écrire", "voir", 
+                "dormir", "attendre", "répondre"
+            ]
+        },
+        "A2": {
+            tenses: {
+                "Présent": 20,
+                "Passé composé": 30,
+                "Imparfait": 30,
+                "Conditionnel présent": 20,
+                "Impératif présent": 10
+            },
+            // Seuls ces verbes tombent au Conditionnel en A2
+            politesse: ["aimer", "vouloir", "pouvoir", "devoir", "souhaiter"]
+        },
+        "B1": {
+            tenses: {
+                "Présent": 10, "Passé composé": 20, "Imparfait": 20, 
+                "Futur simple": 10, "Impératif présent": 10, "Conditionnel présent": 10, 
+                "Plus-que-parfait": 10, "Subjonctif présent": 10
+            }
+        },
+        "B2": {
+            tenses: {
+                "Présent": 5, "Passé composé": 20, "Imparfait": 10, 
+                "Futur simple": 10, "Impératif présent": 5, "Conditionnel présent": 10, 
+                "Plus-que-parfait": 10, "Subjonctif présent": 30
+            }
+        }
+    };
 
+    const levelsAllowed = {
+        "A1": ["A1"],
+        "A2": ["A1", "A2"],
+        "B1": ["A1", "A2", "B1"],
+        "B2": ["A1", "A2", "B1", "B2"]
+    };
+
+    // --- NAVIGATION & INIT ---
     window.setLang = function(l) {
-        currentLang = l;
-        const text = i18n[l];
-        
-        // Traduction générale
+        currentLang = l; const text = i18n[l];
         document.getElementById('btn-menu-classic').innerText = text.menuClassic;
         document.getElementById('btn-menu-challenge').innerText = text.menuChallenge;
         document.getElementById('btn-menu-conj').innerText = text.menuConj;
@@ -332,7 +143,6 @@
         document.getElementById('btn-restart').innerText = text.restartBtn;
         document.getElementById('label-pseudo').innerText = text.pseudoLabel;
         
-        // Nouveaux éléments traduits
         document.getElementById('btn-mode-sd').innerHTML = text.modeSD;
         document.getElementById('btn-mode-ta').innerHTML = text.modeTA;
         document.getElementById('btn-mode-ta-all').innerHTML = text.modeTAAll;
@@ -343,14 +153,12 @@
         document.getElementById('label-top10').innerText = text.top10Current;
         document.getElementById('user-comment').placeholder = text.msgPlaceholder;
         document.getElementById('label-challenge-lvl').innerText = text.chooseLevel;
-        
         window.goToStep('step-main-menu');
     };
 
     window.goToStep = function(id) {
         document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
-        
         if (id === 'step-challenges') {
             document.querySelectorAll('.challenge-btn').forEach(btn => btn.classList.remove('selected'));
             document.getElementById('challenge-level-select').style.display = 'none';
@@ -367,7 +175,6 @@
     };
 
     // --- MODES DE JEUX ---
-
     window.selectLevel = function(lvl) {
         selectedLevel = lvl;
         selectedTenses = (lvl === "A1") ? ["Présent"] : ["Présent", "Imparfait", "Passé composé", "Futur simple", "Conditionnel présent", "Impératif présent", "Plus-que-parfait", "Subjonctif présent"];
@@ -402,10 +209,8 @@
     };
 
     window.startGameLogic = function() {
-        // SÉCURITÉ : On vérifie si les verbes sont bien chargés
         if (fullDatabase.length === 0) {
-            alert(i18n[currentLang].dbError);
-            return; // On annule le démarrage pour éviter le crash
+            alert(i18n[currentLang].dbError); return;
         }
 
         score = 0; total = 0; mistakeTracker = [];
@@ -450,43 +255,86 @@
         }
         
         let valid = false;
-        while(!valid) {
-            let tempV = fullDatabase[Math.floor(Math.random() * fullDatabase.length)];
+        let failSafe = 0;
+
+        while(!valid && failSafe < 1000) {
+            failSafe++;
             
-            // On s'assure que le verbe a bien un niveau, sinon on ignore ce verbe
-            if (!tempV.niveau) continue;
-            
-            // --- VERIFICATION DU NIVEAU ---
-            let isLevelValid = false;
+            // Si on est dans le mode où TOUT est permis et que tous les niveaux donnent des points diff :
             if (gameMode === 'time-attack-weighted') {
-                isLevelValid = true; // Mode pondéré = on garde tous les verbes
-            } else {
-                // Les niveaux sont cumulatifs : En B1, on révise A1, A2 et B1.
-                const levelsAllowed = {
-                    "A1": ["A1"],
-                    "A2": ["A1", "A2"],
-                    "B1": ["A1", "A2", "B1"],
-                    "B2": ["A1", "A2", "B1", "B2"]
-                };
-                if (levelsAllowed[selectedLevel] && levelsAllowed[selectedLevel].includes(tempV.niveau)) {
-                    isLevelValid = true;
+                let tempV = fullDatabase[Math.floor(Math.random() * fullDatabase.length)];
+                if (!tempV.niveau || !tempV.conjugaisons) continue;
+                let possibleTenses = Object.keys(tempV.conjugaisons).filter(t => selectedTenses.includes(t));
+                if (possibleTenses.length > 0) {
+                    currentV = tempV;
+                    currentTense = possibleTenses[Math.floor(Math.random() * possibleTenses.length)];
+                    valid = true;
+                }
+                continue;
+            }
+
+            // Comportement standard basé sur le niveau (A1, A2, B1, B2)
+            let config = levelConfigs[selectedLevel];
+            let allowedLevels = levelsAllowed[selectedLevel];
+
+            // 1. Tirage au sort du Temps en fonction des probabilités (%)
+            let tenses = Object.keys(config.tenses);
+            let weights = Object.values(config.tenses);
+            let totalWeight = weights.reduce((a,b) => a+b, 0);
+            let rand = Math.random() * totalWeight;
+            let tempTense = tenses[0];
+            let sum = 0;
+            for(let i=0; i<tenses.length; i++) {
+                sum += weights[i];
+                if(rand <= sum) {
+                    tempTense = tenses[i]; break;
                 }
             }
 
-            // S'il n'y a pas de conjugaisons dans l'objet, on ignore
-            if (!tempV.conjugaisons) continue;
+            // 2. Filtrer les verbes (selon le niveau et l'existence de la conjugaison)
+            let validVerbs = fullDatabase.filter(v => {
+                if (!v.niveau || !allowedLevels.includes(v.niveau)) return false;
+                if (!v.conjugaisons || !v.conjugaisons[tempTense]) return false;
+                
+                // Restriction A2 : Conditionnel présent = Seulement les verbes de politesse
+                if (selectedLevel === "A2" && tempTense === "Conditionnel présent") {
+                    if (!config.politesse.includes(v.verbe.toLowerCase())) return false;
+                }
+                return true;
+            });
 
-            let possibleTenses = Object.keys(tempV.conjugaisons).filter(t => selectedTenses.includes(t));
-            
-            // On s'assure que le niveau correspond ET qu'il a bien les temps demandés
-            if (isLevelValid && possibleTenses.length > 0) {
-                currentV = tempV;
-                currentTense = possibleTenses[Math.floor(Math.random() * possibleTenses.length)];
+            // 3. Restriction A1 : 50% de réguliers, 50% d'irréguliers (basé sur la liste)
+            if (selectedLevel === "A1" && validVerbs.length > 0) {
+                let wantIrregular = Math.random() < 0.5; // Pile ou face
+                let filteredA1 = validVerbs.filter(v => {
+                    // Vérifie si le verbe est dans la liste (tout en minuscules)
+                    let isIrreg = config.irreguliers.includes(v.verbe.toLowerCase());
+                    return isIrreg === wantIrregular;
+                });
+                // S'il reste des verbes après le filtre, on valide la liste
+                if (filteredA1.length > 0) {
+                    validVerbs = filteredA1;
+                }
+            }
+
+            // 4. Si la liste est valide, on tire un verbe au hasard parmi les survivants
+            if (validVerbs.length > 0) {
+                currentV = validVerbs[Math.floor(Math.random() * validVerbs.length)];
+                currentTense = tempTense;
                 valid = true;
             }
         }
         
-        do { currentPIdx = Math.floor(Math.random() * 6); } while (currentV.conjugaisons[currentTense][currentPIdx] === "");
+        if(!valid) {
+            // Sécurité anti-crash
+            currentV = fullDatabase[0];
+            currentTense = Object.keys(currentV.conjugaisons)[0];
+        }
+
+        // Tirer le pronom aléatoirement (en ignorant ceux qui sont vides)
+        do { 
+            currentPIdx = Math.floor(Math.random() * 6); 
+        } while (currentV.conjugaisons[currentTense][currentPIdx] === "");
         
         document.getElementById('verb-name').innerText = currentV.verbe;
         document.getElementById('verb-traduction').innerText = currentV.traduction ? `(${currentV.traduction})` : "";
@@ -512,9 +360,7 @@
                 let lvl = currentV.niveau || "A1";
                 if(lvl === "A2") pts = 2; else if(lvl === "B1") pts = 3; else if(lvl === "B2") pts = 5;
                 score += pts;
-            } else {
-                score++;
-            }
+            } else { score++; }
             
             let ptsText = gameMode === 'time-attack-weighted' ? ` (+${pts} pts)` : '';
             document.getElementById('feedback').innerHTML = `<span style='color:var(--secondary)'>${i18n[currentLang].successMsg}${ptsText}</span>`;
@@ -570,17 +416,13 @@
     };
 
     // --- LEADERBOARD FIREBASE ---
-
     window.saveScore = function() {
         const pseudo = document.getElementById('user-pseudo').value.trim();
         if(!pseudo) return alert(currentLang === 'ko' ? "닉네임을 입력해주세요!" : "Indique un pseudo !");
         
         const scoreData = { 
-            pseudo: pseudo, 
-            score: score, 
-            mode: gameMode, 
-            level: gameMode === 'time-attack-weighted' ? 'all' : selectedLevel,
-            time: Date.now()
+            pseudo: pseudo, score: score, mode: gameMode, 
+            level: gameMode === 'time-attack-weighted' ? 'all' : selectedLevel, time: Date.now()
         };
         
         database.ref('scores').push(scoreData)
@@ -588,8 +430,7 @@
                 alert(i18n[currentLang].scoreSaved);
                 document.getElementById('save-score-section').style.display = "none";
                 window.loadMiniLeaderboard();
-            })
-            .catch((error) => {
+            }).catch((error) => {
                 console.error("Erreur Firebase:", error);
                 alert(i18n[currentLang].scoreError);
             });
@@ -598,19 +439,14 @@
     window.loadMiniLeaderboard = function() {
         document.getElementById('results-leaderboard').style.display = 'block';
         document.getElementById('mini-leaderboard-content').innerHTML = `<p style='text-align:center;'>${currentLang === 'ko' ? "로딩 중... ⏳" : "Chargement... ⏳"}</p>`;
-        
         database.ref('scores').once('value').then((snapshot) => {
             let scoresList = [];
             snapshot.forEach((childSnapshot) => {
                 let s = childSnapshot.val();
                 let expectedLevel = (gameMode === 'time-attack-weighted') ? 'all' : selectedLevel;
-                if (s.mode === gameMode && s.level === expectedLevel) {
-                    scoresList.push(s);
-                }
+                if (s.mode === gameMode && s.level === expectedLevel) { scoresList.push(s); }
             });
-            
             scoresList.sort((a,b) => b.score - a.score);
-            
             let html = `<table class="leaderboard-table"><tr><th>#</th><th>${currentLang === 'ko' ? '이름' : 'Nom'}</th><th>${currentLang === 'ko' ? '점수' : 'Score'}</th></tr>`;
             if(scoresList.length === 0) {
                 html += `<tr><td colspan="3" style="text-align:center; padding:10px;">${currentLang === 'ko' ? '첫 번째로 기록을 남겨보세요!' : 'Soyez le premier à enregistrer un score !'}</td></tr>`;
@@ -618,33 +454,21 @@
                 scoresList.slice(0,10).forEach((s, idx) => {
                     let textScore = gameMode === 'time-attack-weighted' ? `${s.score} pts` : s.score;
                     let rankEmote = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : "";
-                    html += `<tr>
-                        <td>${rankEmote}${idx+1}</td>
-                        <td>${s.pseudo}</td>
-                        <td style="font-weight:bold;">${textScore}</td>
-                    </tr>`;
+                    html += `<tr><td>${rankEmote}${idx+1}</td><td>${s.pseudo}</td><td style="font-weight:bold;">${textScore}</td></tr>`;
                 });
             }
             html += `</table>`;
             document.getElementById('mini-leaderboard-content').innerHTML = html;
-        }).catch((err) => {
-            console.error("Erreur Mini LB", err);
         });
     };
 
     window.loadLeaderboard = function() {
         window.goToStep('step-leaderboard');
         document.getElementById('leaderboard-content').innerHTML = `<p style='text-align:center; padding: 20px;'>${currentLang === 'ko' ? "챔피언 기록 불러오는 중... ⏳" : "Chargement des champions... ⏳"}</p>`;
-        
         database.ref('scores').once('value').then((snapshot) => {
             firebaseScores = [];
-            snapshot.forEach((childSnapshot) => {
-                firebaseScores.push(childSnapshot.val());
-            });
+            snapshot.forEach((childSnapshot) => firebaseScores.push(childSnapshot.val()));
             window.updateLeaderboardView();
-        }).catch((error) => {
-            console.error("Erreur de récupération Firebase:", error);
-            document.getElementById('leaderboard-content').innerHTML = `<p style='text-align:center; color:red;'>${currentLang === 'ko' ? "기록을 불러오는 중 오류가 발생했습니다." : "Erreur lors du chargement des scores."}</p>`;
         });
     };
 
@@ -652,20 +476,17 @@
         const timeF = document.getElementById('lb-time').value;
         const modeF = document.getElementById('lb-mode').value;
         const levelF = document.getElementById('lb-level').value;
-        
         document.getElementById('lb-level').style.display = (modeF === 'time-attack-weighted') ? 'none' : 'block';
         
         const now = Date.now();
         let filtered = firebaseScores.filter(s => {
             if(s.mode !== modeF) return false;
             if(modeF !== 'time-attack-weighted' && s.level !== levelF) return false;
-            
             const diff = now - s.time;
             if(timeF === 'week' && diff > 7 * 86400000) return false;
             if(timeF === 'month' && diff > 30 * 86400000) return false;
             return true;
         });
-        
         filtered.sort((a,b) => b.score - a.score);
         
         let html = `<table class="leaderboard-table"><tr><th>#</th><th>${currentLang === 'ko' ? '이름' : 'Nom'}</th><th>${currentLang === 'ko' ? '점수' : 'Score'}</th></tr>`;
@@ -675,11 +496,7 @@
             filtered.slice(0,10).forEach((s, idx) => {
                 let textScore = modeF === 'time-attack-weighted' ? `${s.score} pts` : s.score;
                 let rankEmote = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : "";
-                html += `<tr>
-                    <td>${rankEmote}${idx+1}</td>
-                    <td>${s.pseudo}</td>
-                    <td style="font-weight:bold;">${textScore}</td>
-                </tr>`;
+                html += `<tr><td>${rankEmote}${idx+1}</td><td>${s.pseudo}</td><td style="font-weight:bold;">${textScore}</td></tr>`;
             });
         }
         html += `</table>`;
@@ -688,33 +505,23 @@
 
     window.insertChar = function(char) {
         const input = document.getElementById('answer-input');
-        input.value += char;
-        input.focus();
+        input.value += char; input.focus();
     };
 
-    // --- ENVOI KAKAO (Copie Presse-Papiers) ---
     window.sendKakao = function() {
         let userComment = document.getElementById('user-comment').value;
-        
         let modeKo = gameMode === 'classic' ? '기본 연습' : gameMode === 'sudden-death' ? '서든 데스' : gameMode === 'time-attack' ? '타임 어택' : '타임 어택 (모든 동사)';
         let modeFr = gameMode === 'classic' ? 'Classique' : gameMode === 'sudden-death' ? 'Mort Subite' : gameMode === 'time-attack' ? 'Time Attack' : 'Time Attack (Tous les verbes)';
-        
         let texteMessage = currentLang === 'ko' 
             ? `🏆 [Conju-Coach 결과]\n모드: ${modeKo}\n점수: ${score}\n시도한 동사: ${total}\n💬 메시지: ${userComment || "없음"}`
             : `🏆 [Résultat Conju-Coach]\nMode : ${modeFr}\nScore : ${score}\nTotal tentés : ${total}\n💬 Message : ${userComment || "Aucun"}`;
         
         navigator.clipboard.writeText(texteMessage).then(() => {
             alert(currentLang === 'ko' ? "결과가 복사되었습니다! 카카오톡을 열고 마튜 쌤에게 붙여넣기 해주세요 💛" : "Résultat copié ! Tu peux le coller dans ton KakaoTalk pour Matthieu 💛");
-        }).catch(err => {
-            console.error('Erreur copie presse-papiers:', err);
-            alert("Erreur lors de la copie.");
         });
     };
 
-    fetch('verbes.json')
-        .then(res => res.json())
-        .then(data => { fullDatabase = data; })
-        .catch(() => console.log("Erreur chargement verbes.json"));
+    fetch('verbes.json').then(res => res.json()).then(data => { fullDatabase = data; });
 
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
@@ -723,5 +530,3 @@
         }
     });
 </script>
-</body>
-</html>
