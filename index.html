@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conju-Coach DELF</title>
-    <!-- On importe Firebase -->
+    <!-- On importe Firebase et Analytics -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
@@ -210,7 +210,8 @@
         
         <div class="email-section" style="margin-top: 15px;">
             <textarea id="user-comment" rows="2" placeholder="Un petit message ?" style="width:100%; border-radius:8px; padding:10px; border:1px solid #ddd;"></textarea>
-            <button id="btn-email" class="btn-full" style="background:var(--primary); margin-top:5px;" onclick="window.sendEmail()">📧 Crâner auprès de Matthieu</button>
+            <!-- Bouton Kakao aux couleurs officielles KakaoTalk -->
+            <button id="btn-kakao" class="btn-full" style="background:#FEE500; color:#381E1F; margin-top:5px;" onclick="window.sendKakao()">💬 Crâner auprès de Matthieu</button>
         </div>
         <button id="btn-restart" class="btn-full" onclick="location.reload()">Recommencer</button>
     </div>
@@ -232,6 +233,9 @@
     // Initialisation de Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
+    
+    // NOUVEAU : ACTIVATION DE L'ANALYTICS ICI !
+    const analytics = firebase.analytics();
 
     // --- VARIABLES GLOBALES ---
     let currentLang = 'fr';
@@ -269,7 +273,8 @@
             levelLabel: "Niveau DELF :", customBtn: "⚙️ Personnalisé", searchLabel: "📖 Conjugueur",
             qtyLabel: "Combien de verbes ?", infinite: "Infini ∞", startBtn: "Commencer !",
             checkBtn: "Vérifier", stopBtn: "Terminer", pseudoLabel: "Mémoriser mon record (Pseudo) :",
-            emailBtn: "📧 Crâner auprès de Matthieu", restartBtn: "Recommencer", successMsg: "✨ Bravo !",
+            kakaoBtn: "💬 Crâner auprès de Matthieu (Kakao)",
+            restartBtn: "Recommencer", successMsg: "✨ Bravo !",
             errorMsg: "❌ Non :", statsLabel: "de réussite", verbsAttempted: "verbes tentés", reviewTitle: "Tables à réviser :",
             perfectMsg: "Zéro faute ! 🏆", errorLabel: " <-- ERREUR", scoreSaved: "Score enregistré avec succès !", scoreError: "Erreur lors de l'enregistrement.",
             modeSD: "☠️ Mort Subite<br><small>1 erreur = Fini</small>",
@@ -288,7 +293,8 @@
             levelLabel: "델프 레벨 :", customBtn: "⚙️ 개인 설정", searchLabel: "📖 동사 변화표 검색",
             qtyLabel: "동사 개수 :", infinite: "무한 모드 ∞", startBtn: "시작하기!",
             checkBtn: "확인하기", stopBtn: "종료", pseudoLabel: "기록 저장하기 (이름/닉네임):",
-            emailBtn: "📧 마튜에게 자랑하기", restartBtn: "다시 시작하기", successMsg: "✨ 잘했어요!",
+            kakaoBtn: "💬 마튜 쌤에게 카카오톡으로 자랑하기",
+            restartBtn: "다시 시작하기", successMsg: "✨ 잘했어요!",
             errorMsg: "❌ 정답 :", statsLabel: "성공률", verbsAttempted: "개 동사 시도함", reviewTitle: "복습해야 할 표 :",
             perfectMsg: "완벽해요! 🏆", errorLabel: " <-- 내 오답", scoreSaved: "성공적으로 저장되었습니다!", scoreError: "저장 중 오류가 발생했습니다.",
             modeSD: "☠️ 서든 데스 (Sudden Death)<br><small>1번 틀리면 종료</small>",
@@ -323,7 +329,7 @@
         document.getElementById('btn-start').innerText = text.startBtn;
         document.getElementById('btn-submit').innerText = text.checkBtn;
         document.getElementById('btn-stop-infinite').innerText = text.stopBtn;
-        document.getElementById('btn-email').innerText = text.emailBtn;
+        document.getElementById('btn-kakao').innerText = text.kakaoBtn;
         document.getElementById('btn-restart').innerText = text.restartBtn;
         document.getElementById('label-pseudo').innerText = text.pseudoLabel;
         
@@ -656,11 +662,25 @@
         input.focus();
     };
 
-    window.sendEmail = function() {
-        const emailProf = "m.blancheton@gmail.com";
-        const sujet = `Résultats Conjugaison - ${gameMode}`;
-        let corps = `Score : ${score}\nTotal tentés : ${total}\n\nCommentaire : ${document.getElementById('user-comment').value}`;
-        window.location.href = `mailto:${emailProf}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+    // --- ENVOI KAKAO (Copie Presse-Papiers) ---
+    window.sendKakao = function() {
+        let userComment = document.getElementById('user-comment').value;
+        
+        // Traduction des modes pour que tu saches à quoi ils ont joué
+        let modeKo = gameMode === 'classic' ? '기본 연습' : gameMode === 'sudden-death' ? '서든 데스' : gameMode === 'time-attack' ? '타임 어택' : '타임 어택 (모든 동사)';
+        let modeFr = gameMode === 'classic' ? 'Classique' : gameMode === 'sudden-death' ? 'Mort Subite' : gameMode === 'time-attack' ? 'Time Attack' : 'Time Attack (Pondéré)';
+        
+        let texteMessage = currentLang === 'ko' 
+            ? `🏆 [Conju-Coach 결과]\n모드: ${modeKo}\n점수: ${score}\n시도한 동사: ${total}\n💬 메시지: ${userComment || "없음"}`
+            : `🏆 [Résultat Conju-Coach]\nMode : ${modeFr}\nScore : ${score}\nTotal tentés : ${total}\n💬 Message : ${userComment || "Aucun"}`;
+        
+        // Copie automatique
+        navigator.clipboard.writeText(texteMessage).then(() => {
+            alert(currentLang === 'ko' ? "결과가 복사되었습니다! 카카오톡을 열고 마튜 쌤에게 붙여넣기 해주세요 💛" : "Résultat copié ! Tu peux le coller dans ton KakaoTalk pour Matthieu 💛");
+        }).catch(err => {
+            console.error('Erreur copie presse-papiers:', err);
+            alert("Erreur lors de la copie.");
+        });
     };
 
     fetch('verbes.json')
