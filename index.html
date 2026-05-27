@@ -4,21 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conju-Coach DELF Pro</title>
-    <!-- On importe Firebase et Analytics -->
+    
+    <!-- Firebase SDK Compat -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
+
     <style>
-        :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; --warning: #f39c12; }
+        :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; --warning: #f39c12; --gold: #f1c40f; }
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--dark); }
-        .app-container { background: white; width: 95%; max-width: 550px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 550px; display: flex; flex-direction: column; margin: 20px 0; }
+        .app-container { background: white; width: 95%; max-width: 550px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 550px; display: flex; flex-direction: column; margin: 20px 0; position: relative; }
+        
         h1 { text-align: center; font-size: 1.5rem; margin-top: 0; }
         .step { display: none; flex-direction: column; gap: 15px; animation: fadeIn 0.3s; }
         .step.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-choice { padding: 15px; border: 2px solid #ddd; border-radius: 12px; background: white; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 0 #eee; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .btn-choice { padding: 15px; border: 2px solid #ddd; border-radius: 12px; background: white; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 0 #eee; text-align: center; }
         .btn-choice:active { transform: translateY(2px); box-shadow: 0 2px 0 #eee; }
         .btn-choice.selected { background: var(--primary); color: white; border-color: var(--primary); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); transform: translateY(2px); }
         .btn-full { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--dark); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
@@ -29,23 +33,21 @@
         #verb-traduction { font-size: 0.95rem; color: #7f8c8d; display: block; margin-bottom: 10px; font-style: italic; font-weight: normal; }
         #tense-display { font-size: 1.4rem; font-weight: bold; color: var(--warning); margin: 10px 0; display: block; }
         #pronoun { font-size: 1.4rem; font-weight: bold; margin: 10px 0; }
-        #game-timer { font-size: 1.8rem; font-weight: bold; color: var(--error); text-align: center; margin-bottom: 5px; display: none; }
         
-        input[type="text"], input[type="number"] { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; text-align: center; outline: none; }
+        #game-timer { font-size: 1.8rem; font-weight: bold; color: var(--error); text-align: center; }
+        input[type="text"], input[type="number"], textarea { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1rem; text-align: center; outline: none; font-family: inherit; }
         .keyboard { display: flex; justify-content: center; gap: 5px; margin: 10px 0; flex-wrap: wrap; }
         .key { background: white; border: 1px solid #ddd; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1rem; box-shadow: 0 2px 0 #ccc; }
         
-        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
-        .leaderboard-table th { background: var(--primary); color: white; padding: 10px; text-align: left; }
-        .leaderboard-table td { padding: 10px; border-bottom: 1px solid #eee; }
-        .leaderboard-table tr:nth-child(1) { font-weight: bold; color: #d35400; background: #fffdf0; }
-        .leaderboard-table tr:nth-child(2) { font-weight: bold; color: #7f8c8d; background: #fdfdfd; }
-        .leaderboard-table tr:nth-child(3) { font-weight: bold; color: #b87333; background: #fcf9f2; }
-
         .review-block { background: #fff; border: 1px solid #ddd; border-radius: 12px; margin-bottom: 25px; padding: 15px; }
         .review-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
         .review-table td { padding: 8px; border-bottom: 1px solid #f0f0f0; }
         .error-row { background: #fff0f0; color: var(--error); font-weight: bold; }
+        
+        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .leaderboard-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
+        
+        input[type="range"] { width: 100%; accent-color: var(--primary); margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -70,7 +72,7 @@
         <button id="btn-menu-lb" class="btn-full" style="background:var(--secondary)" onclick="window.loadLeaderboard()">🏆 Classements</button>
     </div>
 
-    <!-- 2. CLASSIQUE -->
+    <!-- 2. CHOIX NIVEAU -->
     <div id="step-level" class="step">
         <h2 id="label-level" style="text-align:center; margin:0;">-</h2>
         <div class="btn-grid">
@@ -87,13 +89,13 @@
     <div id="step-challenges" class="step">
         <h2 style="text-align:center; margin:0;">🔥 Modes de Jeu</h2>
         <div class="btn-grid">
-            <button id="btn-mode-sd" class="btn-choice challenge-btn" onclick="window.selectChallengeMode('sudden-death', this)">☠️ Mort Subite</button>
-            <button id="btn-mode-ta" class="btn-choice challenge-btn" onclick="window.selectChallengeMode('time-attack', this)">⏱️ Time Attack</button>
+            <button id="btn-mode-sd" class="btn-choice challenge-btn" onclick="window.selectChallengeMode('sudden-death', this)">☠/button>
+            <button id="btn-mode-ta" class="btn-choice challenge-btn" onclick="window.selectChallengeMode('time-attack', this)">⏱️</button>
         </div>
-        <button id="btn-mode-ta-all" class="btn-choice challenge-btn" style="width:100%; margin-top:10px;" onclick="window.selectChallengeMode('time-attack-weighted', this)">🌟 Time Attack (Tous les verbes)</button>
+        <button id="btn-mode-ta-all" class="btn-choice challenge-btn" style="width:100%; margin-top:10px;" onclick="window.selectChallengeMode('time-attack-weighted', this)">🌟</button>
         
         <div id="challenge-level-select" style="display:none; margin-top:15px; border-top:1px dashed #ddd; padding-top:15px;">
-            <p id="label-challenge-lvl" style="text-align:center; font-weight:bold;">Choisissez le niveau :</p>
+            <p id="label-challenge-lvl" style="text-align:center; font-weight:bold;">Niveau :</p>
             <div class="btn-grid">
                 <button class="btn-choice" onclick="window.startChallengeGame('A1')">A1</button>
                 <button class="btn-choice" onclick="window.startChallengeGame('A2')">A2</button>
@@ -101,7 +103,7 @@
                 <button class="btn-choice" onclick="window.startChallengeGame('B2')">B2</button>
             </div>
         </div>
-        <button class="btn-full" style="background:#95a5a6; margin-top:10px;" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
+        <button class="btn-full" style="background:#95a5a6" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
     </div>
 
     <!-- 4. CUSTOM -->
@@ -109,7 +111,7 @@
         <p id="label-tenses" style="text-align:center; margin-bottom:5px;">-</p>
         <div class="btn-grid" id="tense-buttons"></div>
         <div id="custom-sliders-container"></div>
-        <button id="btn-custom-next" class="btn-full" onclick="window.confirmCustomTenses()">-</button>
+        <button id="btn-custom-next" class="btn-full" onclick="window.confirmCustomTenses()">Suivant ➔</button>
         <button class="btn-full" style="background:#95a5a6; margin-top:10px;" onclick="window.goToStep('step-level')">➔ Retour</button>
     </div>
 
@@ -123,9 +125,9 @@
                 <option value="all">All-Time</option>
             </select>
             <select id="lb-mode" onchange="window.updateLeaderboardView()" style="flex:1; padding:8px; border-radius:8px;">
-                <option value="sudden-death">Mort Subite</option>
-                <option value="time-attack">Time Attack</option>
-                <option value="time-attack-weighted">TA (Global)</option>
+                <option id="opt-mode-sd" value="sudden-death">-</option>
+                <option id="opt-mode-ta" value="time-attack">-</option>
+                <option id="opt-mode-ta-all" value="time-attack-weighted">-</option>
             </select>
         </div>
         <select id="lb-level" onchange="window.updateLeaderboardView()" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ddd; font-weight:bold; margin-bottom:10px;">
@@ -138,7 +140,7 @@
         <button class="btn-full" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
     </div>
 
-    <!-- QUANTITÉ -->
+    <!-- 5. QUANTITÉ -->
     <div id="step-quantity" class="step">
         <p id="label-quantity" style="text-align:center">-</p>
         <input type="number" id="nb-verbes" value="10" min="1" max="50">
@@ -148,10 +150,10 @@
         </div>
     </div>
 
-    <!-- JEU -->
+    <!-- 6. JEU -->
     <div id="step-game" class="step">
         <div id="game-progress" style="text-align: right; font-weight: bold; color: var(--primary);">0</div>
-        <div id="game-timer">⏳ 01:00</div>
+        <div id="game-timer" style="display:none; text-align:center; font-size:1.5rem; font-weight:bold; color:var(--error);">⏳ 01:00</div>
         <div class="verb-card">
             <div id="verb-name">---</div>
             <span id="verb-traduction"></span>
@@ -172,25 +174,25 @@
         <div id="feedback" style="text-align:center; font-weight:bold; min-height:40px; margin-top:15px;"></div>
     </div>
 
-    <!-- RÉSULTATS -->
+    <!-- 7. RÉSULTATS -->
     <div id="step-results" class="step">
         <div class="results-header" style="text-align:center;">
             <div class="score-big" id="final-score">0</div>
             <p id="final-percent" style="font-weight:bold; font-size:1.2rem; margin-top:5px;">-</p>
         </div>
         
-        <div id="save-score-section" style="background:#fef9e7; padding:15px; border-radius:12px; margin: 10px 0; border:1px solid gold; text-align:center;">
-            <p id="label-pseudo" style="margin:0 0 10px 0; font-weight:bold;"></p>
-            <input type="text" id="user-pseudo" maxlength="12" placeholder="Pseudo" style="padding:10px; margin-bottom:10px;">
-            <button id="btn-save-score" class="btn-full" style="background:gold; color:var(--dark); margin:0;" onclick="window.saveScore()"></button>
+        <div id="save-score-section" style="background:#fff9c4; padding:15px; border-radius:12px; border:1px solid #fbc02d; text-align:center; margin-bottom:15px;">
+            <p id="label-pseudo" style="margin-bottom:10px; font-weight:bold"></p>
+            <input type="text" id="user-pseudo" maxlength="12">
+            <button id="btn-save-score" class="btn-full" style="background:#fbc02d; color:#000;" onclick="window.saveScore()"></button>
         </div>
 
         <div id="results-leaderboard" style="display:none; margin: 15px 0;">
             <h3 id="label-top10" style="text-align:center; margin-bottom:10px;">🏆 Top 10 Actuel</h3>
-            <div id="mini-leaderboard-content" style="background:white; border-radius:10px; padding:10px; border:1px solid #ddd;"></div>
+            <div id="mini-leaderboard-content"></div>
         </div>
 
-        <!-- ZONE DE PARTAGE -->
+        <!-- ZONE DE PARTAGE PLACÉE AVANT LA LISTE DES FAUTES -->
         <div class="email-section" style="margin: 10px 0;">
             <textarea id="user-comment" rows="2" style="width:100%; border-radius:8px; padding:10px; border:1px solid #ddd;"></textarea>
             <button id="btn-kakao" class="btn-full" style="background:#FEE500; color:#381E1F; margin-top:5px;" onclick="window.sendKakao()"></button>
@@ -201,7 +203,7 @@
         <button id="btn-restart" class="btn-full" onclick="location.reload()">Recommencer</button>
     </div>
 
-    <!-- CONJUGUEUR -->
+    <!-- 8. CONJUGUEUR -->
     <div id="step-conj" class="step">
         <p id="label-search" style="text-align:center"></p>
         <input type="text" id="search-input" oninput="window.updateSuggestions()" autocomplete="off">
@@ -228,22 +230,18 @@
     const database = firebase.database();
     const analytics = firebase.analytics();
 
-    // --- VARIABLES GLOBALES ---
+    // --- VARIABLES ---
     let currentLang = 'fr';
     let fullDatabase = [];
     let currentV, currentTense, currentPIdx;
-    
     let score = 0, total = 0, targetNb = 10;
     let selectedLevel = 'A1';
     let selectedTenses = [];
     let customWeights = {}; 
     let playedVerbs = []; 
     let mistakeTracker = [];
-    
-    let gameMode = 'classic';
     let timerInterval;
     let timeLeft = 0;
-
     let firebaseScores = [];
 
     const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
@@ -262,37 +260,82 @@
 
     const i18n = {
         fr: {
-            menuClassic: "🎯 Entraînement Classique", menuChallenge: "🔥 Challenges (Défis)", menuConj: "📖 Conjugueur", menuLb: "🏆 Classements",
-            levelLabel: "Choisissez votre niveau DELF :", customBtn: "⚙️ Personnalisé", searchLabel: "📖 Conjugueur : Rechercher un verbe",
-            qtyLabel: "Combien de verbes ?", infinite: "Infini ∞", startBtn: "Commencer !",
-            checkBtn: "Vérifier", stopBtn: "Terminer", pseudoLabel: "Mémoriser mon score (Pseudo) :",
+            menuClassic: "🎯 Entraînement Classique", 
+            menuChallenge: "🔥 Challenges (Défis)", 
+            menuConj: "📖 Conjugueur", 
+            menuLb: "🏆 Classements",
+            levelLabel: "Choisissez votre niveau DELF :", 
+            customBtn: "⚙️ Personnalisé", 
+            searchLabel: "📖 Conjugueur : Rechercher un verbe", 
+            qtyLabel: "Combien de verbes ?", 
+            infinite: "Infini ∞", 
+            startBtn: "Commencer !",
+            checkBtn: "Vérifier", 
+            stopBtn: "Terminer", 
+            pseudoLabel: "Mémoriser mon score (Pseudo) :",
             kakaoBtn: "💬 Crâner auprès de Matthieu",
-            restartBtn: "Recommencer", successMsg: "✨ Bravo !",
-            errorMsg: "❌ Non :", statsLabel: "de réussite", verbsAttempted: "verbes tentés", reviewTitle: "Tables à réviser :",
-            perfectMsg: "Zéro faute ! 🏆", errorLabel: " <-- ERREUR", scoreSaved: "Score enregistré avec succès !", scoreError: "Erreur lors de l'enregistrement.",
-            modeSD: "Mort Subite ☠️",
-            modeTA: "Time Attack ⏱️",
-            modeTAAll: "Time Attack (Tous les verbes) 🌟",
+            restartBtn: "Recommencer", 
+            successMsg: "✨ Bravo !",
+            errorMsg: "❌ Non :", 
+            statsLabel: "de réussite", 
+            verbsAttempted: "verbes tentés", 
+            reviewTitle: "Tables à réviser :",
+            perfectMsg: "Zéro faute ! 🏆", 
+            errorLabel: " <-- ERREUR", 
+            scoreSaved: "Score enregistré avec succès !", 
+            scoreError: "Erreur lors de l'enregistrement.",
+            modeSD: "☠️ Mort Subite<br><small>1 erreur = Fini</small>",
+            modeTA: "⏱️ Time Attack<br><small>60 secondes</small>",
+            modeTAAll: "🌟 Time Attack (Tous les verbes)<br><small style='font-weight:normal;'>1 min - A1=1pt, A2=2pts, B1=3pts, B2=5pts</small>",
             saveScoreBtn: "💾 Enregistrer mon score",
             lbTitle: "🏆 Top Scores",
             lbModeSD: "Mort Subite ☠️", 
             lbModeTA: "Time Attack ⏱️", 
             lbModeTAAll: "Time Attack (Tous les verbes) 🌟",
-            top10Current: "🏆 Top 10 Actuel", msgPlaceholder: "Un petit message ?", chooseLevel: "Choisissez le niveau :"
+            top10Current: "🏆 Top 10 Actuel", 
+            msgPlaceholder: "Un petit message ?", 
+            chooseLevel: "Choisissez le niveau :",
+            searchPlaceholder: "ex: être, manger...",
+            dbError: "Impossible de lancer le jeu : les verbes n'ont pas encore été chargés."
         },
         ko: {
-            menuClassic: "🎯 기본 연습", menuChallenge: "🔥 챌린지 모드", menuConj: "📖 동사 변화표", menuLead: "🏆 순위표",
-            levelLabel: "델프 레벨을 선택하세요 :", customBtn: "⚙️ 개인 설정", searchLabel: "📖 동사 변화표 검색",
-            qtyLabel: "동사 개수 :", infinite: "무한 모드 ∞", startBtn: "시작하기!",
-            checkBtn: "확인하기", stopBtn: "종료", pseudoLabel: "기록 저장하기 (닉네임):",
-            kakaoBtn: "💬 마튜한테 자랑하기", restartBtn: "다시 시작하기", successMsg: "✨ 잘했어요!",
-            errorMsg: "❌ 정답 :", statsLabel: "성공률", verbsAttempted: "개 동사 시도함", reviewTitle: "복습해야 할 표 :",
-            perfectMsg: "완벽해요! 🏆", errorLabel: " <-- 내 오답", scoreSaved: "성공적으로 저장되었습니다!", scoreError: "저장 중 오류가 발생했습니다.",
-            modeSD: "서든 데스 ☠️", modeTA: "타임 어택 ⏱️",
-            modeTAAll: "타임 어택 (모든 동사) 🌟",
-            saveScoreBtn: "💾 내 점수 저장하기", lbTitle: "🏆 순위표",
-            lbModeSD: "서든 데스 ☠️", lbModeTA: "타임 어택 ⏱️", lbModeTAAll: "타임 어택 (모든 동사) 🌟",
-            top10Current: "🏆 현재 Top 10", msgPlaceholder: "간단한 메시지를 남겨주세요", chooseLevel: "레벨을 선택하세요 :"
+            menuClassic: "🎯 기본 연습", 
+            menuChallenge: "🔥 챌린지 모드", 
+            menuConj: "📖 동사 변화표", 
+            menuLb: "🏆 순위표",
+            levelLabel: "델프 레벨을 선택하세요 :", 
+            customBtn: "⚙️ 개인 설정", 
+            searchLabel: "📖 동사 변화표 검색",
+            qtyLabel: "동사 개수 :", 
+            infinite: "무한 모드 ∞", 
+            startBtn: "시작하기!",
+            checkBtn: "확인하기", 
+            stopBtn: "종료", 
+            pseudoLabel: "기록 저장하기 (닉네임):",
+            kakaoBtn: "💬 마튜한테 자랑하기", 
+            restartBtn: "다시 시작하기", 
+            successMsg: "✨ 잘했어요!",
+            errorMsg: "❌ 정답 :", 
+            statsLabel: "성공률", 
+            verbsAttempted: "개 동사 시도함", 
+            reviewTitle: "복습해야 할 표 :",
+            perfectMsg: "완벽해요! 🏆", 
+            errorLabel: " <-- 내 오답", 
+            scoreSaved: "성공적으로 저장되었습니다!", 
+            scoreError: "저장 중 오류가 발생했습니다.",
+            modeSD: "☠️ 서든 데스 (Sudden Death)<br><small>1번 틀리면 종료</small>", 
+            modeTA: "⏱️ 타임 어택<br><small>60초</small>",
+            modeTAAll: "🌟 타임 어택 (모든 동사)<br><small style='font-weight:normal;'>1분 - A1=1점, A2=2점, B1=3점, B2=5점</small>",
+            saveScoreBtn: "💾 내 점수 저장하기", 
+            lbTitle: "🏆 순위표",
+            lbModeSD: "서든 데스 ☠️", 
+            lbModeTA: "타임 어택 ⏱️", 
+            lbModeTAAll: "타임 어택 (모든 동사) 🌟",
+            top10Current: "🏆 현재 Top 10", 
+            msgPlaceholder: "간단한 메시지를 남겨주세요", 
+            chooseLevel: "레벨을 선택하세요 :",
+            searchPlaceholder: "동사를 입력하세요...",
+            dbError: "동사 데이터를 불러올 수 없어 게임을 시작할 수 없습니다."
         }
     };
 
@@ -574,6 +617,7 @@
     };
 
     window.showResults = function() {
+        if(timerInterval) clearInterval(timerInterval);
         window.goToStep('step-results');
         const successRate = total > 0 ? Math.round((score / total) * 100) : 0;
 
@@ -607,7 +651,7 @@
         }
     };
 
-    // --- PARTAGE (AMÉLIORÉ AVEC LE TAUX DE RÉUSSITE & ERREURS COMPLÈTES) ---
+    // --- PARTAGE DÉTAILLÉ AVEC LE SUJET ET LE VERBE FAUX ---
     window.sendKakao = function() {
         let modeKo = gameMode === 'classic' ? '기본 연습' : gameMode === 'sudden-death' ? '서든 데스' : gameMode === 'time-attack' ? '타임 어택' : '타임 어택 (모든 동사)';
         let modeFr = gameMode === 'classic' ? 'Classique' : gameMode === 'sudden-death' ? 'Mort Subite' : gameMode === 'time-attack' ? 'Time Attack' : 'Time Attack (Tous les verbes)';
