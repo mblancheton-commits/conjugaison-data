@@ -233,14 +233,7 @@
     // Initialisation de Firebase
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    
-    // ANTI-CRASH : On ignore l'erreur d'Analytics si on est en local sur l'ordinateur
-    let analytics;
-    try {
-        analytics = firebase.analytics();
-    } catch (e) {
-        console.warn("Analytics non disponible en local (file://). Il s'activera une fois en ligne.");
-    }
+    const analytics = firebase.analytics();
 
     // --- VARIABLES GLOBALES ---
     let currentLang = 'fr';
@@ -409,9 +402,10 @@
     };
 
     window.startGameLogic = function() {
+        // SÉCURITÉ : On vérifie si les verbes sont bien chargés
         if (fullDatabase.length === 0) {
             alert(i18n[currentLang].dbError);
-            return; 
+            return; // On annule le démarrage pour éviter le crash
         }
 
         score = 0; total = 0; mistakeTracker = [];
@@ -459,12 +453,15 @@
         while(!valid) {
             let tempV = fullDatabase[Math.floor(Math.random() * fullDatabase.length)];
             
+            // On s'assure que le verbe a bien un niveau, sinon on ignore ce verbe
             if (!tempV.niveau) continue;
             
+            // --- VERIFICATION DU NIVEAU ---
             let isLevelValid = false;
             if (gameMode === 'time-attack-weighted') {
-                isLevelValid = true; 
+                isLevelValid = true; // Mode pondéré = on garde tous les verbes
             } else {
+                // Les niveaux sont cumulatifs : En B1, on révise A1, A2 et B1.
                 const levelsAllowed = {
                     "A1": ["A1"],
                     "A2": ["A1", "A2"],
@@ -476,10 +473,12 @@
                 }
             }
 
+            // S'il n'y a pas de conjugaisons dans l'objet, on ignore
             if (!tempV.conjugaisons) continue;
 
             let possibleTenses = Object.keys(tempV.conjugaisons).filter(t => selectedTenses.includes(t));
             
+            // On s'assure que le niveau correspond ET qu'il a bien les temps demandés
             if (isLevelValid && possibleTenses.length > 0) {
                 currentV = tempV;
                 currentTense = possibleTenses[Math.floor(Math.random() * possibleTenses.length)];
@@ -713,20 +712,9 @@
     };
 
     fetch('verbes.json')
-        .then(res => {
-            if (!res.ok) {
-                throw new Error("Erreur HTTP: " + res.status + " (Le fichier est introuvable sur le serveur)");
-            }
-            return res.json();
-        })
-        .then(data => { 
-            fullDatabase = data; 
-            console.log("✅ Succès : " + fullDatabase.length + " verbes ont été chargés !");
-        })
-        .catch((error) => { 
-            console.error("❌ ERREUR CRITIQUE de chargement du JSON :", error);
-            alert("Erreur de chargement des verbes. Appuie sur F12 et regarde la Console pour plus de détails.");
-        });
+        .then(res => res.json())
+        .then(data => { fullDatabase = data; })
+        .catch(() => console.log("Erreur chargement verbes.json"));
 
     document.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
