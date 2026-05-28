@@ -4,30 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conju-Coach DELF Pro</title>
-    
-    <!-- Firebase SDK Compat -->
+    <!-- On importe Firebase et Analytics -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
-
     <style>
-        :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; --warning: #f39c12; --gold: #f1c40f; }
+        :root { --primary: #3498db; --secondary: #2ecc71; --error: #e74c3c; --bg: #f4f7f6; --dark: #2c3e50; --warning: #f39c12; }
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; background-color: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--dark); }
-        .app-container { background: white; width: 95%; max-width: 550px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 550px; display: flex; flex-direction: column; margin: 20px 0; position: relative; }
-        
+        .app-container { background: white; width: 95%; max-width: 550px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 25px; min-height: 550px; display: flex; flex-direction: column; margin: 20px 0; }
         h1 { text-align: center; font-size: 1.5rem; margin-top: 0; }
         .step { display: none; flex-direction: column; gap: 15px; animation: fadeIn 0.3s; }
         .step.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-choice { padding: 15px; border: 2px solid #ddd; border-radius: 12px; background: white; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 0 #eee; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .btn-choice:active { transform: translateY(2px); box-shadow: 0 2px 0 #eee; }
         .btn-choice.selected { background: var(--primary); color: white; border-color: var(--primary); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); transform: translateY(2px); }
         .btn-full { width: 100%; padding: 15px; border: none; border-radius: 12px; background: var(--dark); color: white; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1.1rem; }
         
-        /* Cartes Verbes */
+        /* Styles Sliders Personnalisés */
+        input[type="range"] { accent-color: var(--primary); cursor: pointer; }
+        
+        /* Styles Classement & Filtres */
+        .filter-group { display: flex; gap: 5px; margin-bottom: 10px; }
+        .filter-group select { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; background: #fafafa; }
+        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; }
+        .leaderboard-table th { background: var(--primary); color: white; padding: 10px; text-align: left; }
+        .leaderboard-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        .leaderboard-table tr:nth-child(1) { font-weight: bold; color: #d35400; background: #fffdf0; }
+        .leaderboard-table tr:nth-child(2) { font-weight: bold; color: #7f8c8d; background: #fdfdfd; }
+        .leaderboard-table tr:nth-child(3) { font-weight: bold; color: #b87333; background: #fcf9f2; }
+
+        /* Styles Jeu */
         .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; position: relative; }
         #verb-name { font-size: 1.8rem; font-weight: bold; color: var(--primary); text-transform: uppercase; }
         #verb-traduction { font-size: 0.95rem; color: #7f8c8d; display: block; margin-bottom: 10px; font-style: italic; font-weight: normal; }
@@ -43,11 +52,6 @@
         .review-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
         .review-table td { padding: 8px; border-bottom: 1px solid #f0f0f0; }
         .error-row { background: #fff0f0; color: var(--error); font-weight: bold; }
-        
-        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .leaderboard-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
-        
-        input[type="range"] { width: 100%; accent-color: var(--primary); margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -115,7 +119,7 @@
         <button class="btn-full" style="background:#95a5a6; margin-top:10px;" onclick="window.goToStep('step-level')">➔ Retour</button>
     </div>
 
-    <!-- 5. CLASSEMENT -->
+    <!-- 5. CLASSEMENT (REMIS SUR SEMAINE PAR DEFAUT COMME DEMANDE) -->
     <div id="step-leaderboard" class="step">
         <h2 id="label-lb-title" style="text-align:center; margin:0;">🏆 Top Scores</h2>
         <div class="filter-group" style="display:flex; gap:5px; margin-bottom:10px;">
@@ -153,7 +157,7 @@
     <!-- 7. JEU -->
     <div id="step-game" class="step">
         <div id="game-progress" style="text-align: right; font-weight: bold; color: var(--primary);">0 / 10</div>
-        <div id="game-timer" style="display:none; text-align:center; font-size:1.5rem; font-weight:bold; color:var(--error);">⏳ 01:00</div>
+        <div id="game-timer">⏳ 01:00</div>
         <div class="verb-card">
             <div id="verb-name">---</div>
             <span id="verb-traduction"></span>
@@ -189,7 +193,7 @@
 
         <div id="results-leaderboard" style="display:none; margin: 15px 0;">
             <h3 id="label-top10" style="text-align:center; margin-bottom:10px;">🏆 Top 10 Actuel</h3>
-            <div id="mini-leaderboard-content" style="background:white; border-radius:10px; padding:10px; border:1px solid #ddd;"></div>
+            <div id="mini-leaderboard-content"></div>
         </div>
 
         <!-- ZONE DE PARTAGE -->
@@ -198,7 +202,7 @@
             <button id="btn-kakao" class="btn-full" style="background:#FEE500; color:#381E1F; margin-top:5px;" onclick="window.sendKakao()"></button>
         </div>
 
-        <!-- LISTE DES ERREURS -->
+        <!-- MISTAKES EN BAS -->
         <div id="mistake-container"></div>
         <button id="btn-restart" class="btn-full" onclick="location.reload()">Recommencer</button>
     </div>
@@ -309,7 +313,7 @@
             menuClassic: "🎯 기본 연습", 
             menuChallenge: "🔥 챌린지 모드", 
             menuConj: "📖 동사 변화표", 
-            menuLb: "🏆 순위표", // CORRIGÉ de "menuLead" en "menuLb"
+            menuLb: "🏆 순위표", // CORRIGÉ ! 순위표가 드디어 제대로 표시됩니다 !
             levelLabel: "델프 레벨을 선택하세요 :", 
             customBtn: "⚙️ 개인 설정", 
             searchLabel: "📖 동사 변화표 검색",
@@ -418,7 +422,7 @@
         document.getElementById('label-challenge-lvl').innerText = text.chooseLevel;
         document.getElementById('label-lb-title').innerText = text.lbTitle;
 
-        // Traduction des options temporelles du classement (CORRIGÉ !)
+        // Traduction des options temporelles du classement
         document.getElementById('opt-time-week').innerText = text.timeWeek;
         document.getElementById('opt-time-month').innerText = text.timeMonth;
         document.getElementById('opt-time-all').innerText = text.timeAll;
@@ -752,13 +756,21 @@
                 let expectedLevel = (gameMode === 'time-attack-weighted') ? 'all' : selectedLevel;
                 if (s.mode === gameMode && s.level === expectedLevel) { scoresList.push(s); }
             });
-            scoresList.sort((a,b) => b.score - a.score);
+            
+            // Tri robuste gérant à la fois l'ancien format "val" et le nouveau "score"
+            scoresList.sort((a,b) => {
+                const scoreA = parseInt(a.score !== undefined ? a.score : a.val) || 0;
+                const scoreB = parseInt(b.score !== undefined ? b.score : b.val) || 0;
+                return scoreB - scoreA;
+            });
+            
             let html = `<table class="leaderboard-table"><tr><th>#</th><th>${currentLang === 'ko' ? '이름' : 'Nom'}</th><th>${currentLang === 'ko' ? '점수' : 'Score'}</th></tr>`;
             if(scoresList.length === 0) {
                 html += `<tr><td colspan="3" style="text-align:center; padding:10px;">${currentLang === 'ko' ? '첫 번째로 기록을 남겨보세요!' : 'Soyez le premier à enregistrer un score !'}</td></tr>`;
             } else {
                 scoresList.slice(0,10).forEach((s, idx) => {
-                    let textScore = gameMode === 'time-attack-weighted' ? `${s.score} pts` : s.score;
+                    const sVal = s.score !== undefined ? s.score : s.val;
+                    let textScore = gameMode === 'time-attack-weighted' ? `${sVal} pts` : sVal;
                     let rankEmote = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : "";
                     html += `<tr><td>${rankEmote}${idx+1}</td><td>${s.pseudo}</td><td style="font-weight:bold;">${textScore}</td></tr>`;
                 });
@@ -771,7 +783,8 @@
     window.loadLeaderboard = function() {
         window.goToStep('step-leaderboard');
         
-        // Auto-sélection des filtres correspondants au dernier jeu fait
+        // Auto-sélection des filtres correspondants au dernier jeu fait (SEMAINE PAR DEFAUT !)
+        document.getElementById('lb-time').value = 'week';
         if (gameMode !== 'classic') {
             document.getElementById('lb-mode').value = gameMode;
             if (gameMode !== 'time-attack-weighted') {
@@ -795,21 +808,40 @@
         
         const now = Date.now();
         let filtered = firebaseScores.filter(s => {
-            if(s.mode !== modeF) return false;
-            if(modeF !== 'time-attack-weighted' && s.level !== levelF) return false;
-            const diff = now - s.time;
-            if(timeF === 'week' && diff > 7 * 86400000) return false;
-            if(timeF === 'month' && diff > 30 * 86400000) return false;
+            // Rétrocompatibilité des modes de jeu
+            const sMode = s.mode || (s.path && s.path.includes('sudden_death') ? 'sudden-death' : 'time-attack');
+            if(sMode !== modeF) return false;
+            
+            if(modeF !== 'time-attack-weighted') {
+                if(s.level && s.level !== levelF) return false;
+            }
+            
+            // Filtrage temporel gérant l'ancien format "date" et le nouveau "time"
+            const timestamp = s.time || s.date;
+            if (timestamp) {
+                const diff = now - timestamp;
+                if(timeF === 'week' && diff > 7 * 86400000) return false;
+                if(timeF === 'month' && diff > 30 * 86400000) return false;
+            } else if (timeF !== 'all') {
+                return false; // Élimine les anciens scores sans timestamp des classements périodiques
+            }
             return true;
         });
-        filtered.sort((a,b) => b.score - a.score);
+        
+        // Tri numérique rétrocompatible (gérant .score et .val)
+        filtered.sort((a,b) => {
+            const scoreA = parseInt(a.score !== undefined ? a.score : a.val) || 0;
+            const scoreB = parseInt(b.score !== undefined ? b.score : b.val) || 0;
+            return scoreB - scoreA;
+        });
         
         let html = `<table class="leaderboard-table"><tr><th>#</th><th>${currentLang === 'ko' ? '이름' : 'Nom'}</th><th>${currentLang === 'ko' ? '점수' : 'Score'}</th></tr>`;
         if(filtered.length === 0) {
             html += `<tr><td colspan="3" style="text-align:center; padding:20px;">${currentLang === 'ko' ? "이 필터에 해당하는 기록이 없습니다" : "Aucun score pour ce filtre"}</td></tr>`;
         } else {
             filtered.slice(0,10).forEach((s, idx) => {
-                let textScore = modeF === 'time-attack-weighted' ? `${s.score} pts` : s.score;
+                const sVal = s.score !== undefined ? s.score : s.val;
+                let textScore = modeF === 'time-attack-weighted' ? `${sVal} pts` : sVal;
                 let rankEmote = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : "";
                 html += `<tr><td>${rankEmote}${idx+1}</td><td>${s.pseudo}</td><td style="font-weight:bold;">${textScore}</td></tr>`;
             });
@@ -864,97 +896,4 @@
             let dispName = currentLang === 'ko' ? tenseMap[k].ko : k;
             html += `
             <div style="margin-bottom:10px;">
-                <div style="display:flex; justify-content:space-between; font-size:0.95rem; font-weight:bold; margin-bottom:5px; color:var(--dark);">
-                    <span>${dispName}</span>
-                    <span id="val-${k.replace(/\s/g,'')}">${customWeights[k]}%</span>
-                </div>
-                <input type="range" min="0" max="100" value="${customWeights[k]}" oninput="window.updateCustomWeight('${k}', this.value)" style="width:100%;">
-            </div>`;
-        });
-        container.innerHTML = html;
-    };
-
-    window.updateCustomWeight = function(changedTense, newValue) {
-        newValue = parseInt(newValue);
-        let others = Object.keys(customWeights).filter(k => k !== changedTense);
-        let oldSumOthers = others.reduce((a,b) => a + customWeights[b], 0);
-        customWeights[changedTense] = newValue;
-        let targetSumOthers = 100 - newValue;
-        if (others.length > 0) {
-            if (oldSumOthers === 0) {
-                let share = targetSumOthers / others.length;
-                others.forEach(k => customWeights[k] = share);
-            } else {
-                others.forEach(k => { customWeights[k] = (customWeights[k] / oldSumOthers) * targetSumOthers; });
-            }
-        }
-        let finalWeights = {}; let currentTotal = 0;
-        Object.keys(customWeights).forEach(k => {
-            finalWeights[k] = Math.round(customWeights[k]); currentTotal += finalWeights[k];
-        });
-        let diff = 100 - currentTotal;
-        if (diff !== 0 && others.length > 0) { finalWeights[others[0]] += diff; }
-        customWeights = finalWeights;
-        Object.keys(customWeights).forEach(k => {
-            let safeKey = k.replace(/\s/g,'');
-            let slider = document.querySelector(`input[oninput*="'${k}'"]`);
-            let label = document.getElementById(`val-${safeKey}`);
-            if (slider && label) { slider.value = customWeights[k]; label.innerText = customWeights[k] + '%'; }
-        });
-    };
-
-    window.confirmCustomTenses = function() {
-        selectedTenses = Object.keys(customWeights);
-        if (selectedTenses.length === 0) {
-            alert(currentLang === 'ko' ? "최소 하나의 시제를 선택해주세요." : "Veuillez choisir au moins un temps."); return;
-        }
-        window.goToStep('step-quantity');
-    };
-
-    // --- CONJUGUEUR ---
-    window.updateSuggestions = function() {
-        const query = document.getElementById('search-input').value.trim().toLowerCase();
-        const suggBox = document.getElementById('suggestions');
-        const resultsBox = document.getElementById('conj-results');
-        if (query.length < 1) { suggBox.style.display = 'none'; resultsBox.innerHTML = ''; return; }
-        let matches = fullDatabase.filter(v => v.verbe.toLowerCase().startsWith(query)).slice(0, 5);
-        suggBox.innerHTML = '';
-        if (matches.length > 0) {
-            suggBox.style.display = 'block';
-            matches.forEach(v => {
-                let div = document.createElement('div');
-                div.style.padding = "10px"; div.style.cursor = "pointer"; div.style.borderBottom = "1px solid #eee";
-                div.innerText = v.verbe + (v.traduction ? ` (${v.traduction})` : "");
-                div.onclick = () => {
-                    document.getElementById('search-input').value = v.verbe;
-                    suggBox.style.display = 'none';
-                    window.showConjugation(v);
-                };
-                suggBox.appendChild(div);
-            });
-        } else { suggBox.style.display = 'none'; }
-    };
-
-    window.showConjugation = function(v) {
-        const resultsBox = document.getElementById('conj-results');
-        let html = `<h2>${v.verbe.toUpperCase()}</h2>`;
-        Object.keys(v.conjugaisons).forEach(tense => {
-            html += `<div class="review-block"><h3>${currentLang === 'ko' ? tenseMap[tense].ko : tense}</h3><table class="review-table">`;
-            v.conjugaisons[tense].forEach((conj, idx) => {
-                if(conj !== "") html += `<tr><td style="font-weight:bold; color:var(--primary); width:40%;">${window.getPronoun(idx, conj, tense)}</td><td>${conj}</td></tr>`;
-            });
-            html += `</table></div>`;
-        });
-        resultsBox.innerHTML = html;
-    };
-
-    window.insertChar = function(char) {
-        const input = document.getElementById('answer-input');
-        input.value += char; input.focus();
-    };
-
-    fetch('verbes.json').then(res => res.json()).then(data => { fullDatabase = data; });
-    document.addEventListener('keypress', (e) => { if(e.key === 'Enter' && document.querySelector('.step.active').id === 'step-game') window.checkAnswer(); });
-</script>
-</body>
-</html>
+                <div style="display:flex; justify-content:space-between; font-size:0.95rem; font-weight:bold; margin-bottom:5px; color:var(
