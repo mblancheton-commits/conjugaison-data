@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conju-Coach DELF Pro</title>
+    <!-- Import Firebase Compat -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
@@ -46,6 +47,7 @@
     </style>
 </head>
 <body>
+
 <div class="app-container">
     <h1 id="main-title">Conju-Coach ✍️</h1>
 
@@ -157,6 +159,7 @@
                 <button class="key" onclick="window.insertChar('é')">é</button>
                 <button class="key" onclick="window.insertChar('è')">è</button>
                 <button class="key" onclick="window.insertChar('à')">à</button>
+                <button class="key" onclick="window.insertChar('â')">â</button>
                 <button class="key" onclick="window.insertChar('ç')">ç</button>
                 <button class="key" onclick="window.insertChar('ê')">ê</button>
                 <button class="key" onclick="window.insertChar('î')">î</button>
@@ -182,12 +185,15 @@
             <h3 id="label-top10" style="text-align:center; margin-bottom:10px;">🏆 Top 10 Actuel</h3>
             <div id="mini-leaderboard-content"></div>
         </div>
-        <div class="email-section" style="margin:10px 0;">
+        <!-- PARTAGE -->
+        <div class="email-section" style="margin: 10px 0;">
             <textarea id="user-comment" rows="2" style="width:100%; border-radius:8px; padding:10px; border:1px solid #ddd;"></textarea>
             <button id="btn-kakao" class="btn-full" style="background:#FEE500; color:#381E1F; margin-top:5px;" onclick="window.sendKakao()"></button>
         </div>
+        <!-- BOUTON RECOMMENCER DÉPLACÉ SOUS PARTAGE (problème 3) -->
+        <button id="btn-restart" class="btn-full" onclick="window.resetToMenu()">Recommencer</button>
+        <!-- FAUTES -->
         <div id="mistake-container"></div>
-        <button id="btn-restart" class="btn-full" onclick="location.reload()">Recommencer</button>
     </div>
 
     <!-- 9. CONJUGUEUR -->
@@ -201,7 +207,7 @@
 </div>
 
 <script>
-    // ---------- INITIALISATION FIREBASE (OBLIGATOIRE) ----------
+    // ---------- INITIALISATION FIREBASE ----------
     const firebaseConfig = {
         apiKey: "AIzaSyAG9xp3A4pdA-Cbt1qh8uM4tfC7f_1-MXY",
         authDomain: "conjugueur-72dd9.firebaseapp.com",
@@ -214,8 +220,8 @@
     };
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    // ---------------------------------------------------------
 
+    // --- CONSTANTES ---
     const pronoms = ["Je", "Tu", "Il / Elle", "Nous", "Vous", "Ils / Elles"];
     const levelsOrder = ["A1", "A2", "B1", "B2"];
     const a1Irregulars = ["être", "avoir", "faire", "aller", "prendre", "vouloir", "pouvoir", "devoir", "savoir", "comprendre", "apprendre", "mettre", "boire", "venir", "partir", "sortir", "dire", "lire", "écrire", "voir", "dormir", "attendre", "répondre"];
@@ -369,7 +375,7 @@
     let currentLang = 'fr';
     let fullDatabase = [];
     let currentV, currentTense, currentPIdx;
-    let score = 0, total = 0, targetNb = 10;
+    let score = 0, total = 0, correctAnswers = 0, targetNb = 10;   // correctAnswers ajouté (problème 2)
     let selectedLevel = 'A1';
     let selectedTenses = [];
     let customWeights = {};
@@ -378,7 +384,7 @@
     let timerInterval;
     let timeLeft = 0;
     let firebaseScores = [];
-    let gameMode = null;   // Initialisé à null (correction)
+    let gameMode = null;
 
     // --- NAVIGATION & LANGUE ---
     window.setLang = function(l) {
@@ -398,7 +404,6 @@
         document.getElementById('btn-kakao').innerText = text.kakaoBtn;
         document.getElementById('btn-restart').innerText = text.restartBtn;
         document.getElementById('label-pseudo').innerText = text.pseudoLabel;
-
         document.getElementById('btn-mode-sd').innerHTML = text.modeSD;
         document.getElementById('btn-mode-ta').innerHTML = text.modeTA;
         document.getElementById('btn-mode-ta-all').innerHTML = text.modeTAAll;
@@ -410,11 +415,9 @@
         document.getElementById('user-comment').placeholder = text.msgPlaceholder;
         document.getElementById('label-challenge-lvl').innerText = text.chooseLevel;
         document.getElementById('label-lb-title').innerText = text.lbTitle;
-
         document.getElementById('opt-time-week').innerText = text.timeWeek;
         document.getElementById('opt-time-month').innerText = text.timeMonth;
         document.getElementById('opt-time-all').innerText = text.timeAll;
-
         window.goToStep('step-main-menu');
     };
 
@@ -474,7 +477,7 @@
             alert(i18n[currentLang].dbError);
             return;
         }
-        score = 0; total = 0; mistakeTracker = []; playedVerbs = [];
+        score = 0; total = 0; correctAnswers = 0; mistakeTracker = []; playedVerbs = [];   // correctAnswers remis à zéro
         window.goToStep('step-game');
         document.getElementById('btn-stop-infinite').style.display = (targetNb === 999 && gameMode === 'classic') ? 'block' : 'none';
         if (gameMode.includes('time-attack')) {
@@ -583,6 +586,7 @@
         inputField.disabled = true;
         total++;
         if (input === solution) {
+            correctAnswers++;   // incrément du compteur de bonnes réponses (problème 2)
             let pts = 1;
             if (gameMode === 'time-attack-weighted') {
                 const lvl = currentV.niveau || "A1";
@@ -612,7 +616,12 @@
     window.showResults = function() {
         if(timerInterval) clearInterval(timerInterval);
         window.goToStep('step-results');
-        const successRate = total > 0 ? Math.round((score / total) * 100) : 0;
+        // Cacher l'enregistrement pour le mode classique (problème 1)
+        document.getElementById('save-score-section').style.display = (gameMode !== 'classic') ? 'block' : 'none';
+
+        // Calcul du pourcentage avec correctAnswers (problème 2)
+        const successRate = total > 0 ? Math.round((correctAnswers / total) * 100) : 0;
+
         if (gameMode === 'time-attack-weighted') {
             document.getElementById('final-score').innerText = `${score} pts`;
             document.getElementById('final-percent').innerText = `${successRate}% ${i18n[currentLang].statsLabel} (${total} ${i18n[currentLang].verbsAttempted})`;
@@ -648,7 +657,7 @@
         let modeFr = gameMode === 'classic' ? 'Classique' : gameMode === 'sudden-death' ? 'Mort Subite' : gameMode === 'time-attack' ? 'Time Attack' : 'Time Attack (Tous les verbes)';
         let userComment = document.getElementById('user-comment').value;
         let lvlDisplay = selectedLevel === 'all' ? 'Tous / 전체' : selectedLevel;
-        const successRate = total > 0 ? Math.round((score / total) * 100) : 0;
+        const successRate = total > 0 ? Math.round((correctAnswers / total) * 100) : 0;
         let texteMessage = currentLang === 'ko'
             ? `🏆 [Conju-Coach 결과]\n• 모드: ${modeKo}\n• 레벨: ${lvlDisplay}\n• 점수: ${score}\n• 성공률: ${successRate}%\n• 시도한 동사: ${total}\n💬 메시지: ${userComment || "없음"}\n`
             : `🏆 [Résultat Conju-Coach]\n• Mode : ${modeFr}\n• Niveau : ${lvlDisplay}\n• Score : ${score}\n• Taux de réussite : ${successRate}%\n• Total tentés : ${total}\n💬 Message : ${userComment || "Aucun"}\n`;
@@ -687,7 +696,7 @@
         document.body.removeChild(textArea);
     }
 
-    // --- FIREBASE SAVE & LOAD (CORRIGÉ) ---
+    // --- FIREBASE SAVE & LOAD ---
     window.saveScore = function() {
         const pseudo = document.getElementById('user-pseudo').value.trim();
         if(!pseudo) return alert(currentLang === 'ko' ? "닉네임을 입력해주세요!" : "Indique un pseudo !");
@@ -741,8 +750,7 @@
         });
     };
 
-   // --- CLASSEMENT PRINCIPAL (corrigé + logs) ---
-window.loadLeaderboard = function() {
+    window.loadLeaderboard = function() {
     window.goToStep('step-leaderboard');
     document.getElementById('lb-time').value = 'week';
 
@@ -847,53 +855,7 @@ window.updateLeaderboardView = function() {
     html += `</table>`;
     document.getElementById('leaderboard-content').innerHTML = html;
 };
-
-    window.updateLeaderboardView = function() {
-        const timeF = document.getElementById('lb-time').value;
-        const modeF = document.getElementById('lb-mode').value;
-        const levelF = document.getElementById('lb-level').value;
-        document.getElementById('lb-level').style.display = (modeF === 'time-attack-weighted') ? 'none' : 'block';
-        const now = Date.now();
-        let filtered = firebaseScores.filter(s => {
-            const sMode = getNormalizedMode(s.mode || (s.path && s.path.includes('sudden_death') ? 'sudden-death' : 'time-attack'));
-            const fMode = getNormalizedMode(modeF);
-            if(sMode !== fMode) return false;
-            if(fMode !== 'time-attack-weighted') {
-                const sLvl = (s.level || '').toUpperCase();
-                const fLvl = (levelF || '').toUpperCase();
-                if (sLvl !== fLvl) return false;
-            }
-            const timestamp = s.time || s.date;
-            if (timestamp) {
-                const diff = now - timestamp;
-                if(timeF === 'week' && diff > 7 * 86400000) return false;
-                if(timeF === 'month' && diff > 30 * 86400000) return false;
-            } else if (timeF !== 'all') {
-                return false;
-            }
-            return true;
-        });
-        filtered.sort((a,b) => {
-            const scoreA = parseInt(a.score !== undefined ? a.score : a.val) || 0;
-            const scoreB = parseInt(b.score !== undefined ? b.score : b.val) || 0;
-            return scoreB - scoreA;
-        });
-        let html = `<table class="leaderboard-table"><tr><th>#</th><th>${currentLang === 'ko' ? '이름' : 'Nom'}</th><th>${currentLang === 'ko' ? '점수' : 'Score'}</th></tr>`;
-        if(filtered.length === 0) {
-            html += `<tr><td colspan="3" style="text-align:center; padding:20px;">${currentLang === 'ko' ? "이 필터에 해당하는 기록이 없습니다" : "Aucun score pour ce filtre"}</td></tr>`;
-        } else {
-            filtered.slice(0,10).forEach((s, idx) => {
-                const sVal = s.score !== undefined ? s.score : s.val;
-                let textScore = modeF === 'time-attack-weighted' ? `${sVal} pts` : sVal;
-                let rankEmote = idx === 0 ? "🥇 " : idx === 1 ? "🥈 " : idx === 2 ? "🥉 " : "";
-                html += `<tr><td>${rankEmote}${idx+1}</td><td>${s.pseudo}</td><td style="font-weight:bold;">${textScore}</td></tr>`;
-            });
-        }
-        html += `</table>`;
-        document.getElementById('leaderboard-content').innerHTML = html;
-    };
-
-    // --- CUSTOM SLIDERS (inchangé) ---
+    // --- CUSTOM SLIDERS ---
     window.openCustomMode = function() {
         selectedLevel = 'Custom';
         customWeights = {};
@@ -1025,6 +987,23 @@ window.updateLeaderboardView = function() {
     window.insertChar = function(char) {
         const input = document.getElementById('answer-input');
         input.value += char; input.focus();
+    };
+
+    // --- FONCTION RESET POUR LE BOUTON RECOMMENCER (problème 4) ---
+    window.resetToMenu = function() {
+        if (timerInterval) clearInterval(timerInterval);
+        currentV = null;
+        currentTense = null;
+        currentPIdx = null;
+        score = 0;
+        total = 0;
+        correctAnswers = 0;
+        mistakeTracker = [];
+        playedVerbs = [];
+        timeLeft = 0;
+        document.getElementById('game-timer').style.display = 'none';
+        document.getElementById('btn-stop-infinite').style.display = 'none';
+        window.goToStep('step-main-menu');
     };
 
     fetch('verbes.json').then(res => res.json()).then(data => { fullDatabase = data; });
