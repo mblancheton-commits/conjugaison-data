@@ -36,7 +36,7 @@
         .leaderboard-table tr:nth-child(2) { font-weight: bold; color: #7f8c8d; background: #fdfdfd; }
         .leaderboard-table tr:nth-child(3) { font-weight: bold; color: #b87333; background: #fcf9f2; }
 
-        /* Styles Jeu */
+        /* Styles Jeu - Inversion Hiérarchique de la taille des textes */
         .verb-card { background: #eef7ff; border: 2px solid var(--primary); border-radius: 15px; padding: 20px; text-align: center; position: relative; }
         #verb-name { font-size: 1.8rem; font-weight: bold; color: var(--primary); text-transform: uppercase; }
         #verb-traduction { font-size: 0.95rem; color: #7f8c8d; display: block; margin-bottom: 10px; font-style: italic; font-weight: normal; }
@@ -76,7 +76,7 @@
         <button id="btn-menu-lb" class="btn-full" style="background:var(--secondary)" onclick="window.loadLeaderboard()">🏆 Classements</button>
     </div>
 
-    <!-- 2. CHOIX NIVEAU -->
+    <!-- 2. CHOIX NIVEAU CLASSIQUE -->
     <div id="step-level" class="step">
         <h2 id="label-level" style="text-align:center; margin:0;">-</h2>
         <div class="btn-grid">
@@ -99,7 +99,7 @@
         <button id="btn-mode-ta-all" class="btn-choice challenge-btn" style="width:100%; margin-top:10px;" onclick="window.selectChallengeMode('time-attack-weighted', this)">🌟 <span id="txt-ta-all">Time Attack (Tous verbes)</span></button>
         
         <div id="challenge-level-select" style="display:none; margin-top:15px; border-top:1px dashed #ddd; padding-top:15px;">
-            <p id="label-challenge-lvl" style="text-align:center; font-weight:bold;">Niveau :</p>
+            <p id="label-challenge-lvl" style="text-align:center; font-weight:bold;">Choisissez le niveau :</p>
             <div class="btn-grid">
                 <button class="btn-choice" onclick="window.startChallengeGame('A1')">A1</button>
                 <button class="btn-choice" onclick="window.startChallengeGame('A2')">A2</button>
@@ -119,7 +119,7 @@
         <button class="btn-full" style="background:#95a5a6; margin-top:10px;" onclick="window.goToStep('step-level')">➔ Retour</button>
     </div>
 
-    <!-- CLASSEMENT -->
+    <!-- 5. CLASSEMENT (UNIQUE ET SÉCURISÉ) -->
     <div id="step-leaderboard" class="step">
         <h2 id="label-lb-title" style="text-align:center; margin:0;">🏆 Top Scores</h2>
         <div class="filter-group" style="display:flex; gap:5px; margin-bottom:10px;">
@@ -144,7 +144,7 @@
         <button class="btn-full" onclick="window.goToStep('step-main-menu')">➔ Retour</button>
     </div>
 
-    <!-- 5. QUANTITÉ -->
+    <!-- 6. QUANTITÉ -->
     <div id="step-quantity" class="step">
         <p id="label-quantity" style="text-align:center">-</p>
         <input type="number" id="nb-verbes" value="10" min="1" max="50">
@@ -154,10 +154,10 @@
         </div>
     </div>
 
-    <!-- 6. JEU -->
+    <!-- 7. JEU -->
     <div id="step-game" class="step">
-        <div id="game-progress" style="text-align: right; font-weight: bold; color: var(--primary);">0</div>
-        <div id="game-timer" style="display:none; text-align:center; font-size:1.5rem; font-weight:bold; color:var(--error);">⏳ 01:00</div>
+        <div id="game-progress" style="text-align: right; font-weight: bold; color: var(--primary);">0 / 10</div>
+        <div id="game-timer">⏳ 01:00</div>
         <div class="verb-card">
             <div id="verb-name">---</div>
             <span id="verb-traduction"></span>
@@ -178,7 +178,7 @@
         <div id="feedback" style="text-align:center; font-weight:bold; min-height:40px; margin-top:15px;"></div>
     </div>
 
-    <!-- 7. RÉSULTATS -->
+    <!-- 8. RÉSULTATS -->
     <div id="step-results" class="step">
         <div class="results-header" style="text-align:center;">
             <div class="score-big" id="final-score">0</div>
@@ -196,19 +196,18 @@
             <div id="mini-leaderboard-content" style="background:white; border-radius:10px; padding:10px; border:1px solid #ddd;"></div>
         </div>
 
-        <!-- ZONE DE PARTAGE PLACÉE AVANT LA LISTE DES FAUTES -->
+        <!-- ZONE DE PARTAGE -->
         <div class="email-section" style="margin: 10px 0;">
             <textarea id="user-comment" rows="2" style="width:100%; border-radius:8px; padding:10px; border:1px solid #ddd;"></textarea>
             <button id="btn-kakao" class="btn-full" style="background:#FEE500; color:#381E1F; margin-top:5px;" onclick="window.sendKakao()"></button>
         </div>
 
-        <!-- MISTAKES EN BAS -->
+        <!-- LISTE DES ERREURS -->
         <div id="mistake-container"></div>
-        
         <button id="btn-restart" class="btn-full" onclick="location.reload()">Recommencer</button>
     </div>
 
-    <!-- 8. CONJUGUEUR -->
+    <!-- 9. CONJUGUEUR -->
     <div id="step-conj" class="step">
         <p id="label-search" style="text-align:center"></p>
         <input type="text" id="search-input" oninput="window.updateSuggestions()" autocomplete="off">
@@ -314,7 +313,7 @@
             menuClassic: "🎯 기본 연습", 
             menuChallenge: "🔥 챌린지 모드", 
             menuConj: "📖 동사 변화표", 
-            menuLb: "🏆 순위표",
+            menuLead: "🏆 순위표",
             levelLabel: "델프 레벨을 선택하세요 :", 
             customBtn: "⚙️ 개인 설정", 
             searchLabel: "📖 동사 변화표 검색",
@@ -423,7 +422,7 @@
         document.getElementById('label-challenge-lvl').innerText = text.chooseLevel;
         document.getElementById('label-lb-title').innerText = text.lbTitle;
 
-        // Traduction des options temporelles du classement (CORRIGÉ !)
+        // Traduction des options temporelles du classement (FIXÉ !)
         document.getElementById('opt-time-week').innerText = text.timeWeek;
         document.getElementById('opt-time-month').innerText = text.timeMonth;
         document.getElementById('opt-time-all').innerText = text.timeAll;
@@ -638,6 +637,7 @@
     };
 
     window.showResults = function() {
+        if(timerInterval) clearInterval(timerInterval);
         window.goToStep('step-results');
         const successRate = total > 0 ? Math.round((score / total) * 100) : 0;
 
@@ -774,6 +774,15 @@
 
     window.loadLeaderboard = function() {
         window.goToStep('step-leaderboard');
+        
+        // Auto-sélection des filtres correspondants au dernier jeu fait
+        if (gameMode !== 'classic') {
+            document.getElementById('lb-mode').value = gameMode;
+            if (gameMode !== 'time-attack-weighted') {
+                document.getElementById('lb-level').value = selectedLevel;
+            }
+        }
+
         document.getElementById('leaderboard-content').innerHTML = `<p style='text-align:center; padding: 20px;'>${currentLang === 'ko' ? "챔피언 기록 불러오는 중... ⏳" : "Chargement des champions... ⏳"}</p>`;
         database.ref('scores').once('value').then((snapshot) => {
             firebaseScores = [];
